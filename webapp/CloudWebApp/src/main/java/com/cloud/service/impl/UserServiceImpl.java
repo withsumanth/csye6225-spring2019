@@ -14,6 +14,11 @@ public class UserServiceImpl implements UserService{
 	@Autowired
 	private UserDAO userDao;
 
+	/**
+	 * Adds a new user in database
+	 * @param u
+	 * @return
+	 */
 	@Override
 	public User save(User u) {
 		User user = new User();
@@ -23,6 +28,11 @@ public class UserServiceImpl implements UserService{
 		return userDao.save(user);
 	}
 
+	/**
+	 * Find user account using username/email
+	 * @param userEmail
+	 * @return
+	 */
 	@Override
 	public User findByUserEmail(String userEmail) {
 		return userDao.findByUserEmail(userEmail);

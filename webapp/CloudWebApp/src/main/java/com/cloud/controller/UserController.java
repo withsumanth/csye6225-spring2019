@@ -30,6 +30,15 @@ public class UserController {
 	private UserService userService;
 
 
+	/**
+	 * This method handles the call to path /user/registration.
+	 * It validates email and password and returns 401 is either doesn't matches requirements.
+	 * Password must meet requirements as mentioned by NIST
+	 * Checks for used already exits and reponds with HTTP status code 409(CONFLICT)
+	 * Adds new user to the database if all checks have passed
+	 * @param user
+	 * @return
+	 */
 	@RequestMapping(value = "/user/register", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes="application/json")
 	public ResponseEntity<Map<String,Object>> registerUser(@RequestBody User user) {
 		Map<String,Object> m = new HashMap<String,Object>();
@@ -90,6 +99,14 @@ public class UserController {
 	}
 
 
+	/**
+	 * This method handles calls to / and authenticates the user using basic authentication
+	 * If the user is authenticated, a response with the current time
+	 * if the user is not authenticated, a response with HTTP status code 401 (Unauthorized)
+	 * @param request
+	 * @param response
+	 * @return
+	 */
 	@RequestMapping(value = "/", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Map<String,Object>> loginUser(HttpServletRequest request, HttpServletResponse response) {
 		String header = request.getHeader("Authorization");
@@ -119,6 +136,11 @@ public class UserController {
 		}
 	}
 
+	/**
+	 * This method decodes the basic authentication in the header using the Base64 decoder to get the username and password
+	 * @param encoded
+	 * @return
+	 */
 	private static String[] decodeHeader(final String encoded) {
 		assert encoded.substring(0, 6).equals("Basic");
 		String basicAuthEncoded = encoded.substring(6);
