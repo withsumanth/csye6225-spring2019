@@ -20,7 +20,7 @@ import com.cloud.service.UserService;
 @SpringBootTest
 @DataJpaTest
 @WebMvcTest(controllers = UserController.class, secure = false)
-public class CloudAssignment1ApplicationTests {
+public class CloudWebAppTest {
 
 	@Mock
 	UserService userService;
@@ -40,6 +40,6 @@ public class CloudAssignment1ApplicationTests {
 	@Test
 	public void register() {
 		User receivedUser = userService.findByUserEmail("withsumanth92@gmail.com");
-		assertEquals(receivedUser.getUserEmail(), "withsumanth921@gmail.com");
+		assertEquals(receivedUser.getUserEmail(), "withsumanth92@gmail.com");
 	}
 }
