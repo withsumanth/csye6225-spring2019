@@ -75,7 +75,6 @@ public class UserController {
 				if(userExists == null) {
 					userService.save(user);
 					m.put("message", "account created successfully");
-					m.put("email", user.getUserEmail());
 					m.put("status",HttpStatus.CREATED.toString());
 					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.CREATED);
 				}else {
