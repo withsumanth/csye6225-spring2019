@@ -79,4 +79,43 @@ public class UserController {
 		}
 		return null;
 	}
+
+
+	@RequestMapping(value = "/", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Map<String,Object>> loginUser(HttpServletRequest request, HttpServletResponse response) {
+		String header = request.getHeader("Authorization");
+		Map<String,Object> m = new HashMap<String,Object>();
+		if(header!=null && header.contains("Basic")) {
+			String userDetails[] = decodeHeader(header);
+			User userExists = userService.findByUserEmail(userDetails[0]);
+			BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+			if(userExists !=null ) {
+				if(encoder.matches(userDetails[1], userExists.getPassword())) {
+					m.put("message", "Current time is "+new Date());
+					m.put("status",HttpStatus.OK.toString());
+					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.OK);
+				}else {
+					m.put("message", "Password entered is wrong");
+					m.put("status",HttpStatus.FORBIDDEN.toString());
+					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.FORBIDDEN);
+				}
+			}else {
+				m.put("message", "Username does not exist");
+				m.put("status",HttpStatus.FORBIDDEN.toString());
+				return new ResponseEntity<Map<String,Object>>(m,HttpStatus.FORBIDDEN);
+			}
+		}else {
+			m.put("message", "User is not logged in");
+			m.put("status",HttpStatus.UNAUTHORIZED.toString());
+			return new ResponseEntity<Map<String,Object>>(m,HttpStatus.CONFLICT);
+		}
+	}
+
+	private static String[] decodeHeader(final String encoded) {
+		assert encoded.substring(0, 6).equals("Basic");
+		String basicAuthEncoded = encoded.substring(6);
+		String basicAuthAsString = new String(Base64.getDecoder().decode(basicAuthEncoded.getBytes()));
+		final String[] userDetails = basicAuthAsString.split(":", 2);
+		return userDetails;
+	}
 }
