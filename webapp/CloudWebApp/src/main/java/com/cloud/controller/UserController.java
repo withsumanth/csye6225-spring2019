@@ -42,35 +42,44 @@ public class UserController {
 				return new ResponseEntity<Map<String,Object>>(m,HttpStatus.BAD_REQUEST);
 			}else if(user.getUserEmail() == null) {
 				m.put("message", "Email is null or json format is not correct");
-				m.put("status",HttpStatus.NOT_ACCEPTABLE.toString());
-				return new ResponseEntity<Map<String,Object>>(m,HttpStatus.NOT_ACCEPTABLE);
+				m.put("status",HttpStatus.BAD_REQUEST.toString());
+				return new ResponseEntity<Map<String,Object>>(m,HttpStatus.BAD_REQUEST);
 			}else if(user.getPassword() == null) {
-				m.put("message", "Password is or json format is not correct");
-				m.put("status",HttpStatus.NOT_ACCEPTABLE.toString());
-				return new ResponseEntity<Map<String,Object>>(m,HttpStatus.NOT_ACCEPTABLE);
+				m.put("message", "Password is null or json format is not correct");
+				m.put("status",HttpStatus.BAD_REQUEST.toString());
+				return new ResponseEntity<Map<String,Object>>(m,HttpStatus.BAD_REQUEST);
 			}else {
 				Pattern patternForEmail = Pattern.compile(emailPattern);
 				Pattern patternForPassword = Pattern.compile(passwordPattern);
 				Matcher emailMatcher = patternForEmail.matcher(user.getUserEmail());
 				Matcher passwordMatcher = patternForPassword.matcher(user.getPassword());
 				if(!emailMatcher.matches()) {
-					m.put("message", "Email Pattern is wrong");
-					m.put("status",HttpStatus.NOT_ACCEPTABLE.toString());
-					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.NOT_ACCEPTABLE);
+					m.put("message", "Invalid Email address");
+					m.put("status",HttpStatus.BAD_REQUEST.toString());
+					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.BAD_REQUEST);
 				}else if(!passwordMatcher.matches()) {
-					m.put("message", "Password Pattern is wrong");
-					m.put("status",HttpStatus.NOT_ACCEPTABLE.toString());
-					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.NOT_ACCEPTABLE);
+					m.put("message", new String[]{
+							"Password requirement:",
+							"Minimum Password Length 8 " ,
+							"Include Symbols (!@#$)" ,
+							"Include Numbers (0-9)" ,
+							"Include Lowercase (abc)" ,
+							"Include Uppercase (ABC)" ,
+							"Exclude Duplicate Characters" ,
+							"Exclude Similar (iI1loO0)" ,
+							"Include specific characters"});
+					m.put("status",HttpStatus.BAD_REQUEST.toString());
+					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.BAD_REQUEST);
 				}
 				User userExists = userService.findByUserEmail(user.getUserEmail());
 				if(userExists == null) {
 					userService.save(user);
 					m.put("message", "account created successfully");
 					m.put("email", user.getUserEmail());
-					m.put("status",HttpStatus.OK.toString());
-					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.OK);
+					m.put("status",HttpStatus.CREATED.toString());
+					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.CREATED);
 				}else {
-					m.put("message", "Username already exists");
+					m.put("message", "User already exists");
 					m.put("status",HttpStatus.CONFLICT.toString());
 					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.CONFLICT);
 				}
@@ -96,19 +105,18 @@ public class UserController {
 					m.put("status",HttpStatus.OK.toString());
 					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.OK);
 				}else {
-					m.put("message", "Password entered is wrong");
-					m.put("status",HttpStatus.FORBIDDEN.toString());
-					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.FORBIDDEN);
+					m.put("message", "Username/password is incorrect");
+					m.put("status",HttpStatus.UNAUTHORIZED.toString());
+					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.UNAUTHORIZED);
 				}
 			}else {
 				m.put("message", "Username does not exist");
-				m.put("status",HttpStatus.FORBIDDEN.toString());
-				return new ResponseEntity<Map<String,Object>>(m,HttpStatus.FORBIDDEN);
-			}
+				m.put("status",HttpStatus.UNAUTHORIZED.toString());
+				return new ResponseEntity<Map<String,Object>>(m,HttpStatus.UNAUTHORIZED);			}
 		}else {
 			m.put("message", "User is not logged in");
 			m.put("status",HttpStatus.UNAUTHORIZED.toString());
-			return new ResponseEntity<Map<String,Object>>(m,HttpStatus.CONFLICT);
+			return new ResponseEntity<Map<String,Object>>(m,HttpStatus.UNAUTHORIZED);
 		}
 	}
 
