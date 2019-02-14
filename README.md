@@ -28,7 +28,7 @@ Prerequisites for building and deploying your application locally
 5. Now select the POST option and enter the URL as "http:localhost:8080/user/register"
 6. In the body section below, select 'raw' and then select 'JSON(application/json)'
 7. Write the parameters to be sent in JSON format and click on 'Send', see the results on the window below
-6. Now select GET option and enter the URL as "http:localhost:8080/"
+6. Now select GET option and enter the URL as "http://localhost:8080/"
 7. In the 'authorization' section, select 'Basic Auth'
 8. Enter the credentials and click 'Send'
 9. If the credentials are correct, the current timestamp is shown
