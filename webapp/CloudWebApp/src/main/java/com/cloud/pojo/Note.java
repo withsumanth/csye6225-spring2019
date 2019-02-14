@@ -16,7 +16,7 @@ public class Note {
 	@Id
 	@GeneratedValue(generator = "uuid2")
 	@GenericGenerator(name = "uuid2", strategy = "org.hibernate.id.UUIDGenerator")
-	@Column(name = "noteId", columnDefinition = "VARCHAR(255)")
+	@Column(name = "noteId", columnDefinition = "VARCHAR(100)")
 	private String noteId;
 	private String content;
 	private String title;
