@@ -95,12 +95,14 @@ public class NoteController {
 				m.put("message", "There is no note for given id");
 				return new ResponseEntity<Map<String, Object>>(m, HttpStatus.BAD_REQUEST);
 			}else {
-				if(note.getContent() == null || note.getTitle() == null ) {
+				if(note.getContent() == null && note.getTitle() == null ) {
 					m.put("message", "Invalid Note title/content");
 					return new ResponseEntity<Map<String, Object>>(m, HttpStatus.BAD_REQUEST);
 				}else {
-					notetoBeUpdated.setContent(note.getContent());
-					notetoBeUpdated.setTitle(note.getTitle());
+					if(note.getContent()!=null)
+						notetoBeUpdated.setContent(note.getContent());
+					if(note.getTitle()!=null)
+						notetoBeUpdated.setTitle(note.getTitle());
 					Date d = new Date();
 					SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 					notetoBeUpdated.setLastUpdatedOn(f.format(d));
