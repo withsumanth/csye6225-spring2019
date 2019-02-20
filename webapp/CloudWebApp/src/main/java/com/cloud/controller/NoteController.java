@@ -2,7 +2,6 @@ package com.cloud.controller;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,12 +34,16 @@ public class NoteController {
 	private NoteService noteService;
 	@Autowired
 	NoteDAO noteDao;
-
+	
+	private static final CommonControllerMethods methods = new CommonControllerMethods();
+	
+	//Add a note to database
 	@RequestMapping(value = "/note", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = "application/json")
 	public ResponseEntity<Map<String, Object>> registerNote(@RequestBody Note note, HttpServletRequest request) {
 		String header = request.getHeader("Authorization");
+		
 		LinkedHashMap<String, Object> m = new LinkedHashMap<String, Object>();
-		User user = checkBadRequest(header);
+		User user = methods.checkBadRequest(header,userService);
 		if (user != null) {
 			if(note.getContent() == null || note.getTitle() == null || note.getContent().isEmpty() || note.getTitle().isEmpty()) {
 				m.put("message", "Invalid Note title/content");
@@ -60,13 +62,14 @@ public class NoteController {
 		}
 	}
 	
+	//Get one note from database
 	@RequestMapping(value = "/note/{noteId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Map<String, Object>> getNote(@PathVariable String noteId, HttpServletRequest request) {
 		String header = request.getHeader("Authorization");
 		LinkedHashMap<String, Object> m = new LinkedHashMap<String, Object>();
-		User user = checkBadRequest(header);
+		User user = methods.checkBadRequest(header,userService);
 		if (user != null) {
-			Note note = noteDao.findByNoteId(noteId);
+			Note note = noteDao.findByNoteIdAndUser(noteId,user);
 			if(note == null) {
 				m.put("message", "There is no note for given id");
 				return new ResponseEntity<Map<String, Object>>(m, HttpStatus.NOT_FOUND);
@@ -84,13 +87,14 @@ public class NoteController {
 		}
 	}
 	
+	//Update note by noteId
 	@RequestMapping(value = "/note/{noteId}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE, consumes = "application/json")
 	public ResponseEntity<Map<String, Object>> updateNote(@PathVariable String noteId,@RequestBody Note note, HttpServletRequest request) {
 		String header = request.getHeader("Authorization");
 		LinkedHashMap<String, Object> m = new LinkedHashMap<String, Object>();
-		User user = checkBadRequest(header);
+		User user = methods.checkBadRequest(header,userService);
 		if (user != null) {
-			Note notetoBeUpdated = noteDao.findByNoteId(noteId);
+			Note notetoBeUpdated = noteDao.findByNoteIdAndUser(noteId,user);
 			if(notetoBeUpdated == null ) {
 				m.put("message", "There is no note for given id");
 				return new ResponseEntity<Map<String, Object>>(m, HttpStatus.BAD_REQUEST);
@@ -116,13 +120,14 @@ public class NoteController {
 		}
 	}
 	
+	//Delete note for given ID
 	@RequestMapping(value = "/note/{noteId}", method = RequestMethod.DELETE)
 	public ResponseEntity<Map<String, Object>> deleteNote(@PathVariable String noteId, HttpServletRequest request) {
 		String header = request.getHeader("Authorization");
 		LinkedHashMap<String, Object> m = new LinkedHashMap<String, Object>();
-		User user = checkBadRequest(header);
+		User user = methods.checkBadRequest(header,userService);
 		if (user != null) {
-			Note note = noteDao.findByNoteId(noteId);
+			Note note = noteDao.findByNoteIdAndUser(noteId,user);
 			if(note == null) {
 				m.put("message", "There is no note for given id");
 				return new ResponseEntity<Map<String, Object>>(m, HttpStatus.BAD_REQUEST);
@@ -136,11 +141,12 @@ public class NoteController {
 		}
 	}
 	
+	//Get all the notes of a user
 	@RequestMapping(value = "/note", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<List<Map<String, Object>>> registerNote(HttpServletRequest request) {
 		String header = request.getHeader("Authorization");
 		List<Map<String, Object>> mapList = new ArrayList<Map<String, Object>>();
-		User user = checkBadRequest(header);
+		User user = methods.checkBadRequest(header,userService);
 		if (user != null) {
 			List<Note> notes = noteService.findByUser(user);
 			for(Note n:notes) {
@@ -159,27 +165,5 @@ public class NoteController {
 			mapList.add(m);
 			return new ResponseEntity<List<Map<String, Object>>>(mapList, HttpStatus.UNAUTHORIZED);
 		}
-	}
-
-	private User checkBadRequest(String header) {
-		if (header != null && header.contains("Basic")) {
-			String userDetails[] = decodeHeader(header);
-			User userExists = userService.findByUserEmail(userDetails[0]);
-			BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-			if (userExists != null) {
-				if (encoder.matches(userDetails[1], userExists.getPassword())) {
-					return userExists;
-				} 
-			} 
-		} 
-		return null;
-	}
-
-	private static String[] decodeHeader(final String encoded) {
-		assert encoded.substring(0, 6).equals("Basic");
-		String basicAuthEncoded = encoded.substring(6);
-		String basicAuthAsString = new String(Base64.getDecoder().decode(basicAuthEncoded.getBytes()));
-		final String[] userDetails = basicAuthAsString.split(":", 2);
-		return userDetails;
 	}
 }

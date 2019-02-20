@@ -28,7 +28,8 @@ public class UserController {
 	
 	@Autowired
 	private UserService userService;
-
+	
+	private static final CommonControllerMethods methods = new CommonControllerMethods();
 
 	/**
 	 * This method handles the call to path /user/registration.
@@ -112,7 +113,7 @@ public class UserController {
 		String header = request.getHeader("Authorization");
 		Map<String,Object> m = new HashMap<String,Object>();
 		if(header!=null && header.contains("Basic")) {
-			String userDetails[] = decodeHeader(header);
+			String userDetails[] = methods.decodeHeader(header);
 			User userExists = userService.findByUserEmail(userDetails[0]);
 			BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 			if(userExists !=null ) {
@@ -134,18 +135,5 @@ public class UserController {
 			m.put("status",HttpStatus.UNAUTHORIZED.toString());
 			return new ResponseEntity<Map<String,Object>>(m,HttpStatus.UNAUTHORIZED);
 		}
-	}
-
-	/**
-	 * This method decodes the basic authentication in the header using the Base64 decoder to get the username and password
-	 * @param encoded
-	 * @return
-	 */
-	private static String[] decodeHeader(final String encoded) {
-		assert encoded.substring(0, 6).equals("Basic");
-		String basicAuthEncoded = encoded.substring(6);
-		String basicAuthAsString = new String(Base64.getDecoder().decode(basicAuthEncoded.getBytes()));
-		final String[] userDetails = basicAuthAsString.split(":", 2);
-		return userDetails;
 	}
 }
