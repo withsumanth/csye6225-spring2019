@@ -20,6 +20,5 @@ else
       echo "Error in creating CloudFormation"
       echo $stackCreation
     fi
-    printf "\n"
   fi
 fi
