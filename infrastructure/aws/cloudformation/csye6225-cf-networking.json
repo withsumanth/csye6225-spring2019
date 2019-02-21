@@ -39,6 +39,7 @@
            "VpcId" : { "Ref" : "awsvpc" },
            "CidrBlock" : "10.0.5.0/24",
            "AvailabilityZone" : "us-east-1c",
+		       "MapPublicIpOnLaunch" : "true",
            "Tags" : [ { "Key" : "Name", "Value" : "Public-Subnet-3" } ]
          }
       },
@@ -90,6 +91,7 @@
         "Properties" : {
           "RouteTableId" : {"Ref" : "publicRouteTable"},
           "SubnetId" : {"Ref" : "publicSubnet3"}
+
         }
       }
     },
@@ -98,28 +100,28 @@
         "Description" : "The ID of vpc",
         "Value" : {"Ref" : "awsvpc"},
         "Export" : {
-          "Name" : "csye6225-Cloud-Formation-Networking-VPC"
+          "Name" : "csye6225-cf-vpc"
         }
       },
       "publicSubnet1Id" : {
         "Description" : "The ID of public subnet 1",
         "Value" : {"Ref" : "publicSubnet1"},
         "Export" : {
-          "Name" : "csye6225-Cloud-Formation-Networking-public-subnet1"
+          "Name" : "csye6225-cf-dbsubnet1"
         }
       },
       "publicSubnet2Id" : {
         "Description" : "The ID of public subnet 2",
         "Value" : {"Ref" : "publicSubnet2"},
         "Export" : {
-          "Name" : "csye6225-Cloud-Formation-Networking-public-subnet2"
+          "Name" : "csye6225-cf-dbsubnet2"
         }
       },
       "publicSubnet3Id" : {
         "Description" : "The ID of public subnet 3",
         "Value" : {"Ref" : "publicSubnet3"},
         "Export" : {
-          "Name" : "csye6225-Cloud-Formation-Networking-public-subnet3"
+          "Name" : "csye6225-cf-websubnet1"
         }
       }
     }
