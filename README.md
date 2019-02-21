@@ -213,6 +213,47 @@ All below endpoints are authenticated with basic authentication
     **Content:** 
     ```json
     { "error" : "You are unauthorized to make this request." }
+
+- Attach file to note identified by 'id'
+  * **Method** `POST`
+  * **URL:** /note/{idNotes}/attachments
+  * **Success Response:**
+  * **Code:** `200 OK`
+
+  * **Error Response:**
+  
+  **Code** `401 Unauthorized`
+
+- Get list of files attached to the note identified by the ‘id’
+  * **Method** `GET`
+  * **URL:** /note/{idNotes}/attachments
+  * **Success Response:**
+  * **Code:** `200 OK`
+
+  * **Error Response:**
+  
+  **Code** `401 Unauthorized`
+
+- Update file identified by ‘idAttachments’ attached to the note identified by the ‘id’
+  * **Method** `PUT`
+  * **URL:** /note/{idNotes}/attachments/{idAttachments}
+  * **Success Response:**
+  * **Code:** `204 No Content`
+
+  * **Error Response:**
+  
+  **Code** `401 Unauthorized`
+
+- Delete file identified by ‘idAttachments’ attached to the transaction identified by the ‘id’
+  * **Method** `DELETE`
+  * **URL:** /note/{idNotes}/attachments/{idAttachments}
+  * **Success Response:**
+  * **Code:** `204 No Content`
+
+  * **Error Response:**
+  
+  **Code** `401 Unauthorized`
+
     ```
 
 
