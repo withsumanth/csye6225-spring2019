@@ -16,6 +16,10 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.AccessControlList;
+import com.amazonaws.services.s3.model.GroupGrantee;
+import com.amazonaws.services.s3.model.Permission;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.cloud.service.S3Service;
 
 @Service
@@ -50,7 +54,11 @@ public class S3ServiceImpl implements S3Service {
 	@Override
 	public void uploadFile(String keyName, File uploadFile) {
 		try {
-			s3client.putObject(bucketName, keyName, uploadFile);
+		    PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, keyName, uploadFile);
+			AccessControlList acl = new AccessControlList();
+		    acl.grantPermission(GroupGrantee.AllUsers, Permission.Read); //all users or authenticated
+		    putObjectRequest.setAccessControlList(acl);
+		    s3client.putObject(putObjectRequest);
 			logger.info("===================== Upload File - Done! =====================");
 		} catch (AmazonServiceException ase) {
 			logger.info("Caught an AmazonServiceException from PUT requests, rejected reasons:");
