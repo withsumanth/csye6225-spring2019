@@ -83,10 +83,15 @@ public class AttachmentS3Controller {
 					String key = Instant.now().getEpochSecond() + "_" + uploadedFile.getOriginalFilename();
 					String url = "https://"+s3Client.getRegionName()+".s3.amazonaws.com/"+bucketName+"/"+URLEncoder.encode(key,"UTF-8");
                     File file = methods.convertMultiPartToFile(uploadedFile);
+                    String[] split = uploadedFile.getOriginalFilename().split("\\.");
+				    String ext = split[split.length - 1];
                     s3ServiceImpl.uploadFile(key,file);
 					Attachment a = new Attachment();
 					a.setAttachmentUrl(url);
 					a.setNote(note);
+					a.setAttachmentExtension(ext);
+					a.setAttachmentFileName(uploadedFile.getOriginalFilename());
+					a.setAttachmentSize(String.valueOf(uploadedFile.getSize()));
 					Attachment added = attachmentDao.save(a);
 					m.put("id", added.getAttachmentId());
 					m.put("url", added.getAttachmentUrl());
@@ -101,7 +106,7 @@ public class AttachmentS3Controller {
 			}
 		} else {
 			LinkedHashMap<String, Object> m = new LinkedHashMap<String, Object>();
-			m.put("message", "Username/password is incorrect");
+			m.put("message", "Username/password/note id is incorrect");
 			mapList.add(m);
 			return new ResponseEntity<List<Map<String, Object>>>(mapList, HttpStatus.UNAUTHORIZED);
 		}
@@ -165,7 +170,12 @@ public class AttachmentS3Controller {
 							String urlUpdated = "https://"+s3Client.getRegionName()+".s3.amazonaws.com/"+bucketName+"/"+URLEncoder.encode(key,"UTF-8");
 		                    File file = methods.convertMultiPartToFile(files[0]);
 		                    s3ServiceImpl.uploadFile(key,file);
+		                    String[] split = files[0].getOriginalFilename().split("\\.");
+						    String ext = split[split.length - 1];
 							att.setAttachmentUrl(urlUpdated);
+							att.setAttachmentExtension(ext);
+							att.setAttachmentFileName(files[0].getOriginalFilename());
+							att.setAttachmentSize(String.valueOf(files[0].getSize()));
 							attachmentDao.save(att);
 							return new ResponseEntity<Map<String, Object>>(m, HttpStatus.NO_CONTENT);
 						} catch (Exception e) {
