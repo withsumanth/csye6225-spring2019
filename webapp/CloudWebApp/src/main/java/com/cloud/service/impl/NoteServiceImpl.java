@@ -30,8 +30,8 @@ public class NoteServiceImpl implements NoteService{
 		return noteDao.save(n);
 	}
 	
-	public Note findByNoteId(String noteId) {
-		return noteDao.findByNoteId(noteId);
+	public Note findByNoteIdAndUser(String noteId, User user) {
+		return noteDao.findByNoteIdAndUser(noteId,user);
 	}
 	
 	public List<Note> findByUser(User user){

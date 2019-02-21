@@ -8,7 +8,7 @@ import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
 @ComponentScan({ "com.cloud.controller", "com.cloud.service", "com.cloud.dao", "com.cloud.service.impl",
-		"com.cloud.pojo" })
+		"com.cloud.pojo", "com.cloud.auth" })
 public class CloudAssignment1Application extends SpringBootServletInitializer {
 
 	@Override
