@@ -18,6 +18,9 @@ public class Attachment {
 	@Column(name = "attachmentId", columnDefinition = "VARCHAR(100)")
 	private String attachmentId;
 	private String attachmentUrl;
+	private String attachmentFileName;
+	private String attachmentExtension;
+	private String attachmentSize;
 
 	@ManyToOne
 	@JoinColumn(name = "noteId")
@@ -25,6 +28,30 @@ public class Attachment {
 
 	public Attachment() {
 		super();
+	}
+
+	public String getAttachmentFileName() {
+		return attachmentFileName;
+	}
+
+	public void setAttachmentFileName(String attachmentFileName) {
+		this.attachmentFileName = attachmentFileName;
+	}
+
+	public String getAttachmentExtension() {
+		return attachmentExtension;
+	}
+
+	public void setAttachmentExtension(String attachmentExtension) {
+		this.attachmentExtension = attachmentExtension;
+	}
+
+	public String getAttachmentSize() {
+		return attachmentSize;
+	}
+
+	public void setAttachmentSize(String attachmentSize) {
+		this.attachmentSize = attachmentSize;
 	}
 
 	public String getAttachmentId() {

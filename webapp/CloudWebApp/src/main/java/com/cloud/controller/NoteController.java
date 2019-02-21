@@ -19,9 +19,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.cloud.dao.AttachmentDAO;
 import com.cloud.dao.NoteDAO;
+import com.cloud.pojo.Attachment;
 import com.cloud.pojo.Note;
 import com.cloud.pojo.User;
+import com.cloud.service.AttachmentService;
 import com.cloud.service.NoteService;
 import com.cloud.service.UserService;
 
@@ -34,6 +37,8 @@ public class NoteController {
 	private NoteService noteService;
 	@Autowired
 	NoteDAO noteDao;
+	@Autowired
+	AttachmentDAO attachmentDao;
 	
 	private static final CommonControllerMethods methods = new CommonControllerMethods();
 	
@@ -55,6 +60,7 @@ public class NoteController {
 			m.put("title", createdNoted.getTitle());
 			m.put("created_on", createdNoted.getCreatedOn());
 			m.put("last_updated_on", createdNoted.getLastUpdatedOn());
+			m.put("attachments", "[]");
 			return new ResponseEntity<Map<String, Object>>(m, HttpStatus.CREATED);
 		} else {
 			m.put("message", "Username/password is incorrect");
@@ -79,6 +85,14 @@ public class NoteController {
 				m.put("title", note.getTitle());
 				m.put("created_on", note.getCreatedOn());
 				m.put("last_updated_on", note.getLastUpdatedOn());
+				List<Map<String, Object>> attachments = new ArrayList<Map<String, Object>>();
+				for(Attachment a: note.getAttachments()) {
+					LinkedHashMap<String, Object> innerMap = new LinkedHashMap<String, Object>();
+					innerMap.put("id", a.getAttachmentId());
+					innerMap.put("url", a.getAttachmentUrl());
+					attachments.add(innerMap);
+				}
+				m.put("attachments", attachments);
 				return new ResponseEntity<Map<String, Object>>(m, HttpStatus.OK);
 			}
 		} else {
@@ -132,6 +146,9 @@ public class NoteController {
 				m.put("message", "There is no note for given id");
 				return new ResponseEntity<Map<String, Object>>(m, HttpStatus.BAD_REQUEST);
 			}else {
+				for(Attachment a:note.getAttachments()) {
+					attachmentDao.delete(a);
+				}
 				noteDao.delete(note);
 				return new ResponseEntity<Map<String, Object>>(m, HttpStatus.NO_CONTENT);
 			}
@@ -156,6 +173,14 @@ public class NoteController {
 				map.put("title",n.getTitle());
 				map.put("created_on",n.getCreatedOn());
 				map.put("last_updated_on",n.getLastUpdatedOn());
+				List<Map<String, Object>> attachments = new ArrayList<Map<String, Object>>();
+				for(Attachment a: n.getAttachments()) {
+					LinkedHashMap<String, Object> innerMap = new LinkedHashMap<String, Object>();
+					innerMap.put("id", a.getAttachmentId());
+					innerMap.put("url", a.getAttachmentUrl());
+					attachments.add(innerMap);
+				}
+				map.put("attachments", attachments);
 				mapList.add(map);
 			}
 			return new ResponseEntity<List<Map<String, Object>>>(mapList, HttpStatus.OK);

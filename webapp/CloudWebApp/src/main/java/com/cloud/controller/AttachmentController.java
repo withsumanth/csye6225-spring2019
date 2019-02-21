@@ -3,6 +3,8 @@ package com.cloud.controller;
 import java.io.File;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -71,11 +73,16 @@ public class AttachmentController {
 					File file = new File(
 							uploadingdir + Instant.now().getEpochSecond() + "_" + uploadedFile.getOriginalFilename());
 					uploadedFile.transferTo(file);
+					String[] split = uploadedFile.getOriginalFilename().split("\\.");
+				    String ext = split[split.length - 1];
 					String attatchmentUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
 							.path(file.getAbsolutePath()).toUriString();
 					Attachment a = new Attachment();
 					a.setAttachmentUrl(attatchmentUrl);
 					a.setNote(note);
+					a.setAttachmentExtension(ext);
+					a.setAttachmentFileName(uploadedFile.getOriginalFilename());
+					a.setAttachmentSize(String.valueOf(uploadedFile.getSize()));
 					Attachment added = attachmentDao.save(a);
 					m.put("id", added.getAttachmentId());
 					m.put("url", added.getAttachmentUrl());
@@ -90,7 +97,7 @@ public class AttachmentController {
 			}
 		} else {
 			LinkedHashMap<String, Object> m = new LinkedHashMap<String, Object>();
-			m.put("message", "Username/password is incorrect");
+			m.put("message", "Username/password/note id is incorrect");
 			mapList.add(m);
 			return new ResponseEntity<List<Map<String, Object>>>(mapList, HttpStatus.UNAUTHORIZED);
 		}
@@ -155,9 +162,14 @@ public class AttachmentController {
 							File fileToBeUploaded = new File(uploadingdir + Instant.now().getEpochSecond() + "_"
 									+ files[0].getOriginalFilename());
 							files[0].transferTo(fileToBeUploaded);
+							String[] split = files[0].getOriginalFilename().split("\\.");
+						    String ext = split[split.length - 1];
 							String attachmentUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
 									.path(fileToBeUploaded.getAbsolutePath()).toUriString();
 							att.setAttachmentUrl(attachmentUrl);
+							att.setAttachmentExtension(ext);
+							att.setAttachmentFileName(files[0].getOriginalFilename());
+							att.setAttachmentSize(String.valueOf(files[0].getSize()));
 							attachmentDao.save(att);
 							return new ResponseEntity<Map<String, Object>>(m, HttpStatus.NO_CONTENT);
 						} catch (Exception e) {
