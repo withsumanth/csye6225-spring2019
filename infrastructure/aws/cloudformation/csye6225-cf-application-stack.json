@@ -1,0 +1,123 @@
+{
+"AWSTemplateFormatVersion" : "2010-09-09",
+  "Parameters": {
+    "keyPair":{
+		"Type":"String"
+	},
+    "stackName":{
+      "Type":"String"
+    },
+    "amiId":{
+      "Type":"String"
+    }
+  },
+  "Resources" : {
+    "webServerSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+      "GroupDescription": "Enable HTTP access via port 80, SSH access via port 22",
+      "SecurityGroupIngress": [
+          {
+            "IpProtocol":"tcp",
+            "FromPort":"443",
+            "ToPort":"443",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol":"tcp",
+            "FromPort":"8080",
+            "ToPort":"8080",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol":"tcp",
+            "FromPort":"22",
+            "ToPort":"22",
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "VpcId" : {"Fn::ImportValue" : "csye6225-cf-vpc"}
+      }
+    },"dbSecurityGroup" : {
+     "Type" : "AWS::EC2::SecurityGroup",
+       "Properties" : {
+         "GroupDescription" : "Security tag for web server",
+         "SecurityGroupIngress" : [
+           {
+             "SourceSecurityGroupId" : {"Ref":"webServerSecurityGroup"},
+             "FromPort" : 3306,
+             "IpProtocol" : "tcp",
+             "ToPort" : 3306
+           }
+          ],
+         "VpcId" :{"Fn::ImportValue" : "csye6225-cf-vpc"}
+      }
+    },
+    "DBSubnetGroup" : {
+     "Type" : "AWS::RDS::DBSubnetGroup",
+     "Properties" : {
+        "DBSubnetGroupDescription" : "DB Subnet Group",
+        "DBSubnetGroupName" : {"Fn::Join" : ["",[{"Ref" : "stackName"},"-csye6225-db-subnetgroup"]] },
+        "SubnetIds" : [ {"Fn::ImportValue" : "csye6225-cf-dbsubnet1"},{"Fn::ImportValue" : "csye6225-cf-dbsubnet2"}]}
+
+   },
+   "ec2Instance" : {
+        "Type" : "AWS::EC2::Instance",
+         "Properties" : {
+           "SubnetId" : {"Fn::ImportValue" : "csye6225-cf-websubnet1"},
+           "ImageId" : {"Ref":"amiId"},
+		   "KeyName" :  {"Ref":"keyPair"},
+           "InstanceType" : "t2.micro",
+		   "Tags" : [{"Key" : "Name", "Value" : {"Fn::Join" : ["",[{"Ref" : "stackName"},"-csye6225-ec2"]] }}],
+           "BlockDeviceMappings": [
+            {
+              "DeviceName" : "/dev/sda1",
+              "Ebs" : {
+                "VolumeType": "gp2",
+                "DeleteOnTermination" : "true",
+                "VolumeSize": "20"
+              }
+            }
+          ],
+           "SecurityGroupIds" : [{"Ref":"webServerSecurityGroup"}]
+       }
+   },
+    "DynamoDBTable": {
+    "Type" : "AWS::DynamoDB::Table",
+    "Properties" : {
+      "AttributeDefinitions" : [
+        {"AttributeName" : "id", "AttributeType" : "S"}
+      ],
+      "KeySchema" : [
+        {"AttributeName" : "id", "KeyType" : "HASH"}
+      ],
+      "ProvisionedThroughput" : {
+        "ReadCapacityUnits" : 2,
+        "WriteCapacityUnits" : 2
+      },
+
+      "TableName": "csye6225"
+    }
+  },
+
+     "RDSDB" :{
+       "Type" : "AWS::RDS::DBInstance",
+       "Properties" :
+         {
+           "AllocatedStorage" : "5",
+           "DBInstanceClass" : "db.t2.medium",
+           "DBInstanceIdentifier" :"csye6225-spring2019",
+           "DBSubnetGroupName" :{"Ref" : "DBSubnetGroup"},
+           "DBName" : "csye6225",
+           "Engine" : "mysql",
+           "EngineVersion" : "5.6.37",
+           "MasterUsername" : "csye6225master",
+           "MasterUserPassword" : "csye6225password",
+           "MultiAZ" : "false",
+           "PubliclyAccessible" : "true",
+           "VPCSecurityGroups": [{"Ref": "dbSecurityGroup"}]
+         }
+     }
+}
+
+}
