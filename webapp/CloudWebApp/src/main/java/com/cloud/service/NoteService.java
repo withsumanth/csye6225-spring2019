@@ -9,7 +9,7 @@ public interface NoteService {
 	
 	Note save(Note note, User user);
 	
-	Note findByNoteId(String noteId);
+	Note findByNoteIdAndUser(String noteId, User user);
 	
 	List<Note> findByUser(User user);
 }

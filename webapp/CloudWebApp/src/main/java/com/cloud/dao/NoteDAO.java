@@ -12,7 +12,7 @@ import com.cloud.pojo.User;
 public interface NoteDAO extends JpaRepository<Note, Long>{
 	Note save(Note note);
 
-	Note findByNoteId(String noteId);
+	Note findByNoteIdAndUser(String noteId, User user);
 	
 	List<Note> findByUser(User user);
 }
