@@ -82,11 +82,12 @@ public class AttachmentS3Controller {
 					for (MultipartFile uploadedFile : files) {
 						LinkedHashMap<String, Object> m = new LinkedHashMap<String, Object>();
 						String key = Instant.now().getEpochSecond() + "_" + uploadedFile.getOriginalFilename();
-						String url = "https://"+s3Client.getRegionName()+".s3.amazonaws.com/"+bucketName+"/"+URLEncoder.encode(key,"UTF-8");
+						String url = "https://s3.amazonaws.com/"+bucketName+"/"+URLEncoder.encode(key,"UTF-8");
 	                    File file = methods.convertMultiPartToFile(uploadedFile);
 	                    String[] split = uploadedFile.getOriginalFilename().split("\\.");
 					    String ext = split[split.length - 1];
 	                    s3ServiceImpl.uploadFile(key,file);
+	                    file.delete();
 						Attachment a = new Attachment();
 						a.setAttachmentUrl(url);
 						a.setNote(note);
@@ -174,9 +175,10 @@ public class AttachmentS3Controller {
 							String path = url.getPath();
 							s3ServiceImpl.deleteFile(path.split("/")[2]);
 							String key = Instant.now().getEpochSecond() + "_" + files[0].getOriginalFilename();
-							String urlUpdated = "https://"+s3Client.getRegionName()+".s3.amazonaws.com/"+bucketName+"/"+URLEncoder.encode(key,"UTF-8");
+							String urlUpdated = "https://s3.amazonaws.com/"+bucketName+"/"+URLEncoder.encode(key,"UTF-8");
 		                    File file = methods.convertMultiPartToFile(files[0]);
 		                    s3ServiceImpl.uploadFile(key,file);
+		                    file.delete();
 		                    String[] split = files[0].getOriginalFilename().split("\\.");
 						    String ext = split[split.length - 1];
 							att.setAttachmentUrl(urlUpdated);
