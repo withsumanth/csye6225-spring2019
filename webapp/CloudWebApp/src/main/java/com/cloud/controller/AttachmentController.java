@@ -63,37 +63,44 @@ public class AttachmentController {
 		User user = methods.checkBadRequest(header, userService);
 		Note note = noteDao.findByNoteIdAndUser(noteId, user);
 		if (user != null && note != null) {
-			try {
-				File directory = new File(uploadingdir);
-				if (!directory.exists()) {
-					directory.mkdir();
-				}
-				for (MultipartFile uploadedFile : files) {
+			if(files.length>0) {
+				try {
+					File directory = new File(uploadingdir);
+					if (!directory.exists()) {
+						directory.mkdir();
+					}
+					for (MultipartFile uploadedFile : files) {
+						LinkedHashMap<String, Object> m = new LinkedHashMap<String, Object>();
+						File file = new File(
+								uploadingdir + Instant.now().getEpochSecond() + "_" + uploadedFile.getOriginalFilename());
+						uploadedFile.transferTo(file);
+						String[] split = uploadedFile.getOriginalFilename().split("\\.");
+					    String ext = split[split.length - 1];
+						String attatchmentUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+								.path(file.getAbsolutePath()).toUriString();
+						Attachment a = new Attachment();
+						a.setAttachmentUrl(attatchmentUrl);
+						a.setNote(note);
+						a.setAttachmentExtension(ext);
+						a.setAttachmentFileName(uploadedFile.getOriginalFilename());
+						a.setAttachmentSize(String.valueOf(uploadedFile.getSize()));
+						Attachment added = attachmentDao.save(a);
+						m.put("id", added.getAttachmentId());
+						m.put("url", added.getAttachmentUrl());
+						mapList.add(m);
+					}
+					return new ResponseEntity<List<Map<String, Object>>>(mapList, HttpStatus.CREATED);
+				} catch (Exception e) {
 					LinkedHashMap<String, Object> m = new LinkedHashMap<String, Object>();
-					File file = new File(
-							uploadingdir + Instant.now().getEpochSecond() + "_" + uploadedFile.getOriginalFilename());
-					uploadedFile.transferTo(file);
-					String[] split = uploadedFile.getOriginalFilename().split("\\.");
-				    String ext = split[split.length - 1];
-					String attatchmentUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-							.path(file.getAbsolutePath()).toUriString();
-					Attachment a = new Attachment();
-					a.setAttachmentUrl(attatchmentUrl);
-					a.setNote(note);
-					a.setAttachmentExtension(ext);
-					a.setAttachmentFileName(uploadedFile.getOriginalFilename());
-					a.setAttachmentSize(String.valueOf(uploadedFile.getSize()));
-					Attachment added = attachmentDao.save(a);
-					m.put("id", added.getAttachmentId());
-					m.put("url", added.getAttachmentUrl());
+					m.put("message", "Error in thr file " + e);
 					mapList.add(m);
+					return new ResponseEntity<List<Map<String, Object>>>(mapList, HttpStatus.UNPROCESSABLE_ENTITY);
 				}
-				return new ResponseEntity<List<Map<String, Object>>>(mapList, HttpStatus.CREATED);
-			} catch (Exception e) {
+			}else {
 				LinkedHashMap<String, Object> m = new LinkedHashMap<String, Object>();
-				m.put("message", "Error in thr file " + e);
+				m.put("message", "Please add a file");
 				mapList.add(m);
-				return new ResponseEntity<List<Map<String, Object>>>(mapList, HttpStatus.UNPROCESSABLE_ENTITY);
+				return new ResponseEntity<List<Map<String, Object>>>(mapList, HttpStatus.UNAUTHORIZED);
 			}
 		} else {
 			LinkedHashMap<String, Object> m = new LinkedHashMap<String, Object>();
@@ -150,7 +157,7 @@ public class AttachmentController {
 		User user = methods.checkBadRequest(header, userService);
 		if (user != null) {
 			Note note = noteDao.findByNoteIdAndUser(noteId, user);
-			if (note != null) {
+			if (note != null && files.length > 0) {
 				if (files.length < 2) {
 					Attachment att = attachmentDao.findByAttachmentIdAndNote(attId, note);
 					if (att != null) {
@@ -185,7 +192,7 @@ public class AttachmentController {
 					return new ResponseEntity<Map<String, Object>>(m, HttpStatus.UNPROCESSABLE_ENTITY);
 				}
 			} else {
-				m.put("message", "There is no note for given id");
+				m.put("message", "There is no note for given id/Attachment is not added");
 				return new ResponseEntity<Map<String, Object>>(m, HttpStatus.BAD_REQUEST);
 			}
 		} else {
