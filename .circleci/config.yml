@@ -23,11 +23,11 @@ jobs:
           command: |
             pwd
             ls -al
-            cd CloudWebApp
+            cd webapp/CloudWebApp
             mvn clean package
             cd target/
             ls -al
-            cd ../
+            cd ../../../
             pwd
             ls -al
       - run:
@@ -36,7 +36,7 @@ jobs:
             echo "Hello the current build number is ${CIRCLE_BUILD_NUM}"
             pwd
             mkdir -p codedeploy_artifact
-            zip -r csye6225-web-app-${CIRCLE_BUILD_NUM}.zip target/CloudAssignment1-0.0.1-SNAPSHOT.war scripts/*.sh *.yml
+            zip -r csye6225-web-app-${CIRCLE_BUILD_NUM}.zip webapp/CloudWebApp/target/CloudAssignment1-0.0.1-SNAPSHOT.war scripts/*.sh *.yml
             mv csye6225-web-app-${CIRCLE_BUILD_NUM}.zip codedeploy_artifact/
             cd codedeploy_artifact
             ls -al
