@@ -5,6 +5,6 @@ files:
     destination: /opt/tomcat/webapps
 hooks:
   AfterInstall:
-   - location: ./scripts/afterInstall.sh
+   - location: ./infrastructure/aws/codedeploy/afterInstall.sh
      timeout: 180
      runas: centos
