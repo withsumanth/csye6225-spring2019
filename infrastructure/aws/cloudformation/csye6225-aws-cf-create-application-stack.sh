@@ -12,7 +12,7 @@ else
 		else
 			echo "Creating application stack"
 	    AMI_ID=$(aws ec2 describe-images --filters "Name=tag:Base_AMI_Name,Values=ami-9887c6e7" --query 'Images[*].{ID:ImageId}' --output text)
-	    stackCreation=$(aws cloudformation create-stack --stack-name $STACK_NAME --template-body file://csye6225-cf-application-stack.json --parameters ParameterKey=stackName,ParameterValue=$STACK_NAME ParameterKey=keyPair,ParameterValue=$KEY_NAME ParameterKey=amiId,ParameterValue=$AMI_ID ParameterKey=s3Domain,ParameterValue=$BucketName)
+	    stackCreation=$(aws cloudformation create-stack --stack-name $STACK_NAME --template-body file://csye6225-cf-application-stack.json --parameters ParameterKey=stackName,ParameterValue=$STACK_NAME ParameterKey=keyPair,ParameterValue=$KEY_NAME ParameterKey=amiId,ParameterValue=$AMI_ID ParameterKey=s3Bucket,ParameterValue=$BucketName)
 	    if [ $? -eq 0 ]; then
 	      stackCompletion=$(aws cloudformation wait stack-create-complete --stack-name $STACK_NAME)
 	      if [ $? -eq 0 ]; then
