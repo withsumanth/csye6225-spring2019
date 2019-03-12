@@ -13,7 +13,6 @@ jobs:
           name: Install packages
           command: sudo apt-get update && sudo apt-get install wget zip unzip python2.7 python-pip -y
 
-
       - run:
           name: Install awscli
           command: sudo pip install awscli
@@ -48,4 +47,11 @@ jobs:
           name: Upload Artifact to S3
           command: |
             aws s3 sync codedeploy_artifact s3://code-deploy.csye6225-spring2019-kabrap.me.csye6225.com
-      
+      - run:
+          name: Code Deploy
+          command: |
+            aws deploy create-deployment --application-name csye6225-webapp \
+            --deployment-config-name CodeDeployDefault.AllAtOnce \
+            --deployment-group-name csye6225-webapp-deployment \
+            --description "CSYE6255 - CodeDeploy" \
+            --s3-location bucket=code-deploy.csye6225-spring2019-kabrap.me.csye6225.com,key=csye6225-web-app-${CIRCLE_BUILD_NUM}.zip,bundleType=zip

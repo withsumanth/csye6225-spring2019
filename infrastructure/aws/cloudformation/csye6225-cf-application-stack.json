@@ -79,7 +79,42 @@
               }
             }
           ],
-           "SecurityGroupIds" : [{"Ref":"webServerSecurityGroup"}]
+           "SecurityGroupIds" : [{"Ref":"webServerSecurityGroup"}],
+           "UserData": {
+            "Fn::Base64": {
+                "Fn::Join": [
+                    "\n",
+                    ["#!/bin/bash -xe ",
+                        "sudo su",
+                        "echo '#!/bin/sh' >> /opt/tomcat/bin/setenv.sh",
+                        {
+                         "Fn::Join": [
+                          "",
+                        [
+                        "echo 'JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.url=\"jdbc:mysql://",
+                        {
+                         "Fn::GetAtt": [
+                            "RDSDB",
+                            "Endpoint.Address"
+                         ]
+                         },
+                          ":3306/csye6225\"\"'>> /opt/tomcat/bin/setenv.sh \n"
+                             ]
+          ]
+        },
+        {"Fn::Join":["",["sudo echo 'JAVA_OPTS=\"$JAVA_OPTS -Dspring.profiles.active=dev\"'>> /opt/tomcat/bin/setenv.sh\n"]]},
+        {"Fn::Join":["",["sudo echo 'JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.username=csye6225master","\"' >> /opt/tomcat/bin/setenv.sh\n"]]},
+        {"Fn::Join":["",["sudo echo 'JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.password=csye6225password","\"' >> /opt/tomcat/bin/setenv.sh\n"]]},
+          {"Fn::Join":["",["sudo echo 'JAVA_OPTS=\"$JAVA_OPTS -Dbucket.name=csye6225-spring2019-kabrap.me.csye6225.com","\"' >> /opt/tomcat/bin/setenv.sh\n"]]},
+
+          "chmod +x /opt/tomcat/bin/setenv.sh",
+                       "systemctl enable tomcat.service",
+                        "systemctl start tomcat.service"
+
+                    ]
+                ]
+            }
+        }
        }
    },
     "DynamoDBTable": {
