@@ -9,6 +9,21 @@
     },
     "amiId":{
       "Type":"String"
+    },
+    "s3Bucket" : {
+      "Type" : "String"
+    },
+    "DBUsername" : {
+      "Default" : "csye6225master",
+      "Description" : "The database admin account username",
+      "Type": "String",
+      "AllowedPattern" : "[a-zA-Z][a-zA-Z0-9]*"
+    },
+    "DBPassword" : {
+      "Default": "csye6225password",
+      "Description" : "The database admin account password",
+      "Type": "String",
+      "AllowedPattern" : "[a-zA-Z0-9]*"
     }
   },
   "Resources" : {
@@ -102,20 +117,19 @@
                              ]
           ]
         },
-        {"Fn::Join":["",["sudo echo 'JAVA_OPTS=\"$JAVA_OPTS -Dspring.profiles.active=dev\"'>> /opt/tomcat/bin/setenv.sh\n"]]},
-        {"Fn::Join":["",["sudo echo 'JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.username=csye6225master","\"' >> /opt/tomcat/bin/setenv.sh\n"]]},
-        {"Fn::Join":["",["sudo echo 'JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.password=csye6225password","\"' >> /opt/tomcat/bin/setenv.sh\n"]]},
-          {"Fn::Join":["",["sudo echo 'JAVA_OPTS=\"$JAVA_OPTS -Dbucket.name=csye6225-spring2019-kabrap.me.csye6225.com","\"' >> /opt/tomcat/bin/setenv.sh\n"]]},
-
-          "chmod +x /opt/tomcat/bin/setenv.sh",
-                       "systemctl enable tomcat.service",
-                        "systemctl start tomcat.service"
-
+              {"Fn::Join":["",["sudo echo 'JAVA_OPTS=\"$JAVA_OPTS -Dspring.profiles.active=dev\"'>> /opt/tomcat/bin/setenv.sh\n"]]},
+              {"Fn::Join":["",["sudo echo 'JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.username=",{"Ref":"DBUsername"},"\"' >> /opt/tomcat/bin/setenv.sh\n"]]},
+              {"Fn::Join":["",["sudo echo 'JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.password=",{"Ref":"DBPassword"},"\"' >> /opt/tomcat/bin/setenv.sh\n"]]},
+              {"Fn::Join":["",["sudo echo 'JAVA_OPTS=\"$JAVA_OPTS -Dbucket.name=",{"Ref":"s3Bucket"},"\"' >> /opt/tomcat/bin/setenv.sh\n"]]},
+              "chmod +x /opt/tomcat/bin/setenv.sh",
+              "systemctl enable tomcat.service",
+              "systemctl start tomcat.service"
                     ]
                 ]
             }
         }
-       }
+       },
+       "DependsOn" : "RDSDB"
    },
     "DynamoDBTable": {
     "Type" : "AWS::DynamoDB::Table",
@@ -130,7 +144,6 @@
         "ReadCapacityUnits" : 2,
         "WriteCapacityUnits" : 2
       },
-
       "TableName": "csye6225"
     }
   },
