@@ -35,7 +35,7 @@ jobs:
             echo "Hello the current build number is ${CIRCLE_BUILD_NUM}"
             pwd
             mkdir -p codedeploy_artifact
-            zip -r csye6225-web-app-${CIRCLE_BUILD_NUM}.zip webapp/CloudWebApp/target/CloudAssignment1-0.0.1-SNAPSHOT.war scripts/*.sh *.yml
+            zip -r csye6225-web-app-${CIRCLE_BUILD_NUM}.zip webapp/CloudWebApp/target/CloudAssignment1-0.0.1-SNAPSHOT.war infrastructure/aws/codedeploy/*.sh *.yml
             mv csye6225-web-app-${CIRCLE_BUILD_NUM}.zip codedeploy_artifact/
             cd codedeploy_artifact
             ls -al
@@ -46,7 +46,7 @@ jobs:
       - run:
           name: Upload Artifact to S3
           command: |
-            aws s3 sync codedeploy_artifact s3://code-deploy.csye6225-spring2019-kabrap.me.csye6225.com
+            aws s3 sync codedeploy_artifact s3://${BUCKET_NAME}
       - run:
           name: Code Deploy
           command: |
@@ -54,4 +54,4 @@ jobs:
             --deployment-config-name CodeDeployDefault.AllAtOnce \
             --deployment-group-name csye6225-webapp-deployment \
             --description "CSYE6255 - CodeDeploy" \
-            --s3-location bucket=code-deploy.csye6225-spring2019-kabrap.me.csye6225.com,key=csye6225-web-app-${CIRCLE_BUILD_NUM}.zip,bundleType=zip
+            --s3-location bucket=${BUCKET_NAME},key=csye6225-web-app-${CIRCLE_BUILD_NUM}.zip,bundleType=zip
