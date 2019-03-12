@@ -12,7 +12,7 @@
 	<groupId>com.example</groupId>
 	<artifactId>CloudAssignment1</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>CloudAssignment1</name>
+	<packaging>war</packaging>
 	<description>Demo project for Spring Boot</description>
 
 	<properties>
