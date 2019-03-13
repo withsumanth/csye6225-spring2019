@@ -11,7 +11,7 @@ else
 	echo $BucketName
 	stackCreation=$(aws cloudformation create-stack \
 		--stack-name $STACK_NAME  \
-		--template-body file://cicd.json \
+		--template-body file://csye6225-aws-cf-create-cicd-policy-stack.json \
 		--capabilities CAPABILITY_NAMED_IAM \
 		--parameters  ParameterKey="s3bucket",ParameterValue=$BucketName ParameterKey="accid",ParameterValue=$ACC_ID \
 		--disable-rollback)
