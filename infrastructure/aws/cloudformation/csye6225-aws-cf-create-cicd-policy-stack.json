@@ -307,5 +307,16 @@
             "RoleName":"CodeDeployServiceRole"
          }
       }
-   }
+   },
+   "Outputs" : {
+     "CodeDeployServiceRoleArn" : {
+       "Description" : "Code Deploy Arn",
+       "Value" : {
+         "Fn::GetAtt" : ["CodeDeployServiceRole", "Arn"]
+       },
+       "Export" : {
+         "Name" : "CodeDeployServiceRoleOutput"
+       }
+     }
+    }
 }
