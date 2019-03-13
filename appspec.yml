@@ -1,0 +1,11 @@
+version: 0.0
+os: linux
+files:
+  - source: webapp/CloudWebApp/target/webapp.war
+    destination: /opt/tomcat/webapps
+hooks:
+  AfterInstall:
+   - location: ./infrastructure/aws/codedeploy/afterInstall.sh
+     timeout: 180
+     runas: centos
+ 
