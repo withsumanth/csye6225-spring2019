@@ -282,6 +282,20 @@
             "RoleName":"CodeDeployEC2ServiceRole"
          }
       },
+
+      "CodeDeployEC2ServiceInstanceProfile" : {
+         "Type" : "AWS::IAM::InstanceProfile",
+         "Properties" : {
+           "Path" : "/",
+           "Roles" : [
+             {
+               "Ref" : "CodeDeployEC2ServiceRole"
+             }
+           ],
+           "InstanceProfileName":"EC2ToS3BucketInstanceProfile"
+         }
+       },
+
       "CodeDeployServiceRole":{
          "Type":"AWS::IAM::Role",
          "Properties":{
