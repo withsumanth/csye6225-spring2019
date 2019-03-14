@@ -48,7 +48,7 @@ public class NoteController {
 	private static final CommonControllerMethods methods = new CommonControllerMethods();
 	
 	//Add a note to database
-	@RequestMapping(value = "/note", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = "application/json")
+	@RequestMapping(value = "/notePrash", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = "application/json")
 	public ResponseEntity<Map<String, Object>> registerNote(@RequestBody Note note, HttpServletRequest request) {
 		String header = request.getHeader("Authorization");
 		
