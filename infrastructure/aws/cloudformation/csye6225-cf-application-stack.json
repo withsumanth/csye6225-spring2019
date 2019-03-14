@@ -113,6 +113,9 @@
                "Ref":"keyPair"
             },
             "InstanceType":"t2.micro",
+            "IamInstanceProfile" : {
+               "Fn::ImportValue":"CodeDeployEC2ServiceRoleOutput"
+            },
             "Tags":[
                {
                   "Key":"codeDeployKey",
