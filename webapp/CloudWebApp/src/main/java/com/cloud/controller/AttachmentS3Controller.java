@@ -87,7 +87,6 @@ public class AttachmentS3Controller {
 	                    String[] split = uploadedFile.getOriginalFilename().split("\\.");
 					    String ext = split[split.length - 1];
 	                    s3ServiceImpl.uploadFile(key,file);
-	                    file.delete();
 						Attachment a = new Attachment();
 						a.setAttachmentUrl(url);
 						a.setNote(note);
@@ -178,7 +177,6 @@ public class AttachmentS3Controller {
 							String urlUpdated = "https://s3.amazonaws.com/"+bucketName+"/"+URLEncoder.encode(key,"UTF-8");
 		                    File file = methods.convertMultiPartToFile(files[0]);
 		                    s3ServiceImpl.uploadFile(key,file);
-		                    file.delete();
 		                    String[] split = files[0].getOriginalFilename().split("\\.");
 						    String ext = split[split.length - 1];
 							att.setAttachmentUrl(urlUpdated);

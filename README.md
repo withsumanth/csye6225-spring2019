@@ -51,7 +51,7 @@ Prerequisites for building and deploying your application locally
 
     OR
 
-  * **Code:** `409 CONFLICT`
+  * **Code:** `409 CONFLICT` 
     **Content:** 
     ```json
     { "error" : "User already exits" }
