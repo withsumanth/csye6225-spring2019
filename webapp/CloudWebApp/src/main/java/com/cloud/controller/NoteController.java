@@ -1,5 +1,7 @@
 package com.cloud.controller;
 
+import java.net.URL;
+import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -27,6 +29,7 @@ import com.cloud.pojo.User;
 import com.cloud.service.AttachmentService;
 import com.cloud.service.NoteService;
 import com.cloud.service.UserService;
+import com.cloud.service.impl.S3ServiceImpl;
 
 @RestController
 public class NoteController {
@@ -39,6 +42,8 @@ public class NoteController {
 	NoteDAO noteDao;
 	@Autowired
 	AttachmentDAO attachmentDao;
+	@Autowired
+	private S3ServiceImpl s3ServiceImpl;
 	
 	private static final CommonControllerMethods methods = new CommonControllerMethods();
 	
@@ -147,7 +152,15 @@ public class NoteController {
 				return new ResponseEntity<Map<String, Object>>(m, HttpStatus.BAD_REQUEST);
 			}else {
 				for(Attachment a:note.getAttachments()) {
-					attachmentDao.delete(a);
+					try {
+						URL url = new URL(URLDecoder.decode(a.getAttachmentUrl(), "UTF-8"));
+						String path = url.getPath();
+						s3ServiceImpl.deleteFile(path.split("/")[2]);
+						attachmentDao.delete(a);
+					}catch (Exception e){
+						m.put("message", "Error in thr file " + e);
+						return new ResponseEntity<Map<String, Object>>(m, HttpStatus.UNPROCESSABLE_ENTITY);
+					}
 				}
 				noteDao.delete(note);
 				return new ResponseEntity<Map<String, Object>>(m, HttpStatus.NO_CONTENT);
