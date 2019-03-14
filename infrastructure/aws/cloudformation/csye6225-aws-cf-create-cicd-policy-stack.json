@@ -31,7 +31,7 @@
                               [
                                  "arn:aws:s3:::",
                                  {
-                                    "Ref":"s3bucket"
+                                    "Fn::Join" : ["",[{"Ref" : "s3bucket"},".csye6225.com"]]
                                  },
                                  "/*"
                               ]
@@ -104,7 +104,7 @@
                               [
                                  "arn:aws:s3:::",
                                  {
-                                    "Ref":"s3bucket"
+                                    "Fn::Join" : ["",[{"Ref" : "s3bucket"},".csye6225.com"]]
                                  },
                                  "/*"
                               ]
@@ -116,7 +116,7 @@
             },
             "PolicyName":"CirlceCI-Upload-To-S3",
             "Users":[
-               "Circleci1"
+               "circleci"
             ]
          }
       },
@@ -203,7 +203,7 @@
             },
             "PolicyName":"CirlceCI-Code-Deploy",
             "Users":[
-               "Circleci1"
+               "circleci"
             ]
          }
       },
@@ -256,7 +256,7 @@
             },
             "PolicyName":"circleci-ec2-ami",
             "Users":[
-               "Circleci1"
+               "circleci"
             ]
          }
       },
@@ -283,7 +283,7 @@
          }
       },
 
-      "CodeDeployEC2ServiceInstanceProfile" : {
+      "CodeDeployEC2InstanceProfile" : {
          "Type" : "AWS::IAM::InstanceProfile",
          "Properties" : {
            "Path" : "/",
@@ -292,7 +292,7 @@
                "Ref" : "CodeDeployEC2ServiceRole"
              }
            ],
-           "InstanceProfileName":"EC2ToS3BucketInstanceProfile"
+           "InstanceProfileName":"CodeDeployEC2InstanceProfile"
          }
        },
 
@@ -333,12 +333,10 @@
        }
      },
      "CodeDeployEC2ServiceRoleArn" : {
-       "Description" : "Code Deploy Arn",
-       "Value" : {
-         "Fn::GetAtt" : ["CodeDeployEC2ServiceRole", "Arn"]
-       },
+       "Description" : "Code Deploy EC2 Instance Profile",
+       "Value" : {"Ref" : "CodeDeployEC2InstanceProfile"},
        "Export" : {
-         "Name" : "CodeDeployEC2ServiceRoleOutput"
+         "Name" : "CodeDeployEC2InstanceProfile"
        }
      }
     }
