@@ -31,7 +31,7 @@
                               [
                                  "arn:aws:s3:::",
                                  {
-                                    "Fn::Join" : ["",[{"Ref" : "s3bucket"},".csye6225.com"]]
+                                    "Fn::Join" : ["",["code-deploy.",{"Ref" : "s3bucket"}]]
                                  },
                                  "/*"
                               ]
@@ -68,7 +68,7 @@
                               [
                                  "arn:aws:s3:::",
                                  {
-                                    "Fn::Join" : ["",["code-deploy.",{"Ref" : "s3bucket"}]]
+                                   "Fn::Join" : ["",[{"Ref" : "s3bucket"},".csye6225.com"]]
                                  },
                                  "/*"
                               ]
@@ -104,7 +104,7 @@
                               [
                                  "arn:aws:s3:::",
                                  {
-                                    "Fn::Join" : ["",[{"Ref" : "s3bucket"},".csye6225.com"]]
+                                    "Fn::Join" : ["",["code-deploy.",{"Ref" : "s3bucket"}]]
                                  },
                                  "/*"
                               ]
