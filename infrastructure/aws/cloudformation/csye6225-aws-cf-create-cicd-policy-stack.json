@@ -95,7 +95,8 @@
                   {
                      "Effect":"Allow",
                      "Action":[
-                        "s3:PutObject"
+                        "s3:PutObject",
+                        "s3:ListBucket"
                      ],
                      "Resource":[
                         {
@@ -106,7 +107,7 @@
                                  {
                                     "Fn::Join" : ["",["code-deploy.",{"Ref" : "s3bucket"}]]
                                  },
-                                 "/*"
+                                 "*"
                               ]
                            ]
                         }
