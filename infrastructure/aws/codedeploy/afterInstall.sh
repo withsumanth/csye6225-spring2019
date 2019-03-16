@@ -12,3 +12,7 @@ sudo rm -rf /opt/tomcat/logs/*.log
 sudo rm -rf /opt/tomcat/logs/*.txt
 
 sudo systemctl start tomcat.service
+
+sleep 8
+
+sudo systemctl restart tomcat.service
