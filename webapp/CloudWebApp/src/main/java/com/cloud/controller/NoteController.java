@@ -74,7 +74,7 @@ public class NoteController {
 	}
 	
 	//Get one note from database
-	@RequestMapping(value = "/noteSumanth/{noteId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value = "/note/{noteId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Map<String, Object>> getNote(@PathVariable String noteId, HttpServletRequest request) {
 		String header = request.getHeader("Authorization");
 		LinkedHashMap<String, Object> m = new LinkedHashMap<String, Object>();
