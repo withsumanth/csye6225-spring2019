@@ -76,6 +76,13 @@
 			<artifactId>aws-java-sdk-core</artifactId>
 			<version>1.11.501</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.timgroup/java-statsd-client -->
+		<dependency>
+			<groupId>com.timgroup</groupId>
+			<artifactId>java-statsd-client</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+
 
 
 	</dependencies>

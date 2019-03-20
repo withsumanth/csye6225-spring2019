@@ -10,6 +10,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Base64;
 import java.util.Date;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.cloud.pojo.User;
 import com.cloud.service.UserService;
+import com.timgroup.statsd.StatsDClient;
 
 @RestController
 public class UserController {
@@ -29,7 +32,11 @@ public class UserController {
 	@Autowired
 	private UserService userService;
 	
+	@Autowired
+	private StatsDClient statsDClient;
+	
 	private static final CommonControllerMethods methods = new CommonControllerMethods();
+	private final static Logger logger = LoggerFactory.getLogger(UserController.class);
 
 	/**
 	 * This method handles the call to path /user/registration.
@@ -42,6 +49,7 @@ public class UserController {
 	 */
 	@RequestMapping(value = "/user/register", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes="application/json")
 	public ResponseEntity<Map<String,Object>> registerUser(@RequestBody User user) {
+		statsDClient.incrementCounter("endpoint.createuser.http.post");
 		Map<String,Object> m = new HashMap<String,Object>();
 		try {
 			String emailPattern = "^([a-zA-Z0-9_.+-])+\\@(([a-zA-Z0-9-])+\\.)+([a-zA-Z0-9]{2,4})+$";
@@ -110,6 +118,7 @@ public class UserController {
 	 */
 	@RequestMapping(value = "/", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Map<String,Object>> loginUser(HttpServletRequest request, HttpServletResponse response) {
+		statsDClient.incrementCounter("endpoint.createuser.http.get");
 		String header = request.getHeader("Authorization");
 		Map<String,Object> m = new HashMap<String,Object>();
 		if(header!=null && header.contains("Basic")) {
