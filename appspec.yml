@@ -1,7 +1,7 @@
 version: 0.0
 os: linux
 files:
-  - source: webapp/CloudWebApp/target/webapp.war
+  - source: webapp/CloudWebApp/target/ROOT.war
     destination: /opt/tomcat/webapps
   - source: infrastructure/aws/codedeploy/cloudwatch-config.json
     destination: /opt
@@ -22,11 +22,3 @@ hooks:
    - location: ./infrastructure/aws/codedeploy/applicationStop.sh
      timeout: 180
      runas: centos
-  Install:
-     - location: ./infrastructure/aws/codedeploy/beforeinstall.sh
-       timeout: 180
-       runas: centos
-  ValidateService:
-     - location: ./infrastructure/aws/codedeploy/beforeinstall.sh
-       timeout: 180
-       runas: centos
