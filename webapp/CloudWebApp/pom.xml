@@ -76,6 +76,13 @@
 			<artifactId>aws-java-sdk-core</artifactId>
 			<version>1.11.501</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.timgroup/java-statsd-client -->
+		<dependency>
+			<groupId>com.timgroup</groupId>
+			<artifactId>java-statsd-client</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+
 
 
 	</dependencies>
@@ -83,7 +90,7 @@
 	<build>
 		<!-- <plugins> <plugin> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-maven-plugin</artifactId> 
 			</plugin> </plugins> -->
-		<finalName>webapp</finalName>
+		<finalName>ROOT</finalName>
 	</build>
 
 </project>
