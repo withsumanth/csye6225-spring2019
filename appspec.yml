@@ -22,3 +22,11 @@ hooks:
    - location: ./infrastructure/aws/codedeploy/applicationStop.sh
      timeout: 180
      runas: centos
+  Install:
+     - location: ./infrastructure/aws/codedeploy/beforeinstall.sh
+       timeout: 180
+       runas: centos
+  ValidateService:
+     - location: ./infrastructure/aws/codedeploy/beforeinstall.sh
+       timeout: 180
+       runas: centos
