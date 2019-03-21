@@ -57,14 +57,17 @@ public class UserController {
 			if(user == null) {
 				m.put("message", "Please send username and password");
 				m.put("status",HttpStatus.BAD_REQUEST.toString());
+				logger.info("Please send username and password - BAD_REQUEST "+ UserController.class);
 				return new ResponseEntity<Map<String,Object>>(m,HttpStatus.BAD_REQUEST);
 			}else if(user.getUserEmail() == null) {
 				m.put("message", "Email is null or json format is not correct");
 				m.put("status",HttpStatus.BAD_REQUEST.toString());
+				logger.info("Email is null or json format is not correct - BAD_REQUEST "+ UserController.class);
 				return new ResponseEntity<Map<String,Object>>(m,HttpStatus.BAD_REQUEST);
 			}else if(user.getPassword() == null) {
 				m.put("message", "Password is null or json format is not correct");
 				m.put("status",HttpStatus.BAD_REQUEST.toString());
+				logger.info("Password is null or json format is not correct - BAD_REQUEST "+ UserController.class);
 				return new ResponseEntity<Map<String,Object>>(m,HttpStatus.BAD_REQUEST);
 			}else {
 				Pattern patternForEmail = Pattern.compile(emailPattern);
@@ -74,6 +77,7 @@ public class UserController {
 				if(!emailMatcher.matches()) {
 					m.put("message", "Invalid Email address");
 					m.put("status",HttpStatus.BAD_REQUEST.toString());
+					logger.info("Invalid Email address BAD_REQUEST "+ UserController.class);
 					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.BAD_REQUEST);
 				}else if(!passwordMatcher.matches()) {
 					m.put("message", new String[]{
@@ -87,6 +91,7 @@ public class UserController {
 							"Exclude Similar (iI1loO0)" ,
 							"Include specific characters"});
 					m.put("status",HttpStatus.BAD_REQUEST.toString());
+					logger.info("Invalid password format BAD_REQUEST "+ UserController.class);
 					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.BAD_REQUEST);
 				}
 				User userExists = userService.findByUserEmail(user.getUserEmail());
@@ -94,14 +99,17 @@ public class UserController {
 					userService.save(user);
 					m.put("message", "account created successfully");
 					m.put("status",HttpStatus.CREATED.toString());
+					logger.info("account created successfully - CREATED "+ UserController.class);
 					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.CREATED);
 				}else {
 					m.put("message", "User already exists");
 					m.put("status",HttpStatus.CONFLICT.toString());
+					logger.info("User already exists - CONFLICT "+ UserController.class);
 					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.CONFLICT);
 				}
 			}
 		} catch (Exception e) {
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
 		return null;
@@ -118,7 +126,7 @@ public class UserController {
 	 */
 	@RequestMapping(value = "/", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Map<String,Object>> loginUser(HttpServletRequest request, HttpServletResponse response) {
-		statsDClient.incrementCounter("endpoint.createuser.http.get");
+		statsDClient.incrementCounter("endpoint.getuser.http.get");
 		String header = request.getHeader("Authorization");
 		Map<String,Object> m = new HashMap<String,Object>();
 		if(header!=null && header.contains("Basic")) {
@@ -129,9 +137,11 @@ public class UserController {
 				if(encoder.matches(userDetails[1], userExists.getPassword())) {
 					m.put("message", "Current time is "+new Date());
 					m.put("status",HttpStatus.OK.toString());
+					logger.info("Logged In - OK "+ UserController.class);
 					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.OK);
 				}else {
 					m.put("message", "Username/password is incorrect");
+					logger.info("Username/password is incorrect - UNAUTHORIZED "+ UserController.class);
 					m.put("status",HttpStatus.UNAUTHORIZED.toString());
 					return new ResponseEntity<Map<String,Object>>(m,HttpStatus.UNAUTHORIZED);
 				}
