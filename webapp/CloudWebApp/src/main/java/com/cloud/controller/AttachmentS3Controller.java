@@ -14,6 +14,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -40,6 +42,7 @@ import com.cloud.pojo.User;
 import com.cloud.service.AttachmentService;
 import com.cloud.service.UserService;
 import com.cloud.service.impl.S3ServiceImpl;
+import com.timgroup.statsd.StatsDClient;
 
 @Profile("dev")
 @RestController
@@ -52,6 +55,8 @@ public class AttachmentS3Controller {
 	AttachmentDAO attachmentDao;
 	@Autowired
 	private AttachmentService attachmentService;
+	@Autowired
+	private StatsDClient statsDClient;
 	
 	@Autowired
 	private AmazonS3 s3Client;
@@ -65,6 +70,7 @@ public class AttachmentS3Controller {
 	private static final String uploadingdir = "/uploadingdir/";
 
 	private static final CommonControllerMethods methods = new CommonControllerMethods();
+	private final static Logger logger = LoggerFactory.getLogger(AttachmentS3Controller.class);
 
 	// Add attachment to database
 	@RequestMapping(value = "/note/{noteId}/attachments", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = {
@@ -72,6 +78,7 @@ public class AttachmentS3Controller {
 	public ResponseEntity<List<Map<String, Object>>> registerAttachment(
 			@RequestParam(value = "file") MultipartFile[] files, HttpServletRequest request,
 			@PathVariable String noteId) {
+		statsDClient.incrementCounter("endpoint.addattachment.http.post");
 		String header = request.getHeader("Authorization");
 		List<Map<String, Object>> mapList = new ArrayList<Map<String, Object>>();
 		User user = methods.checkBadRequest(header, userService);
@@ -98,11 +105,13 @@ public class AttachmentS3Controller {
 						m.put("url", added.getAttachmentUrl());
 						mapList.add(m);
 					}
+					logger.info("Attachment Created - CREATED "+ AttachmentS3Controller.class);
 					return new ResponseEntity<List<Map<String, Object>>>(mapList, HttpStatus.CREATED);
 				} catch (Exception e) {
 					LinkedHashMap<String, Object> m = new LinkedHashMap<String, Object>();
-					m.put("message", "Error in thr file " + e);
+					m.put("message", "Error in the file " + e);
 					mapList.add(m);
+					logger.error("Error in adding file Created - UNPROCESSABLE_ENTITY "+ AttachmentS3Controller.class);
 					return new ResponseEntity<List<Map<String, Object>>>(mapList, HttpStatus.UNPROCESSABLE_ENTITY);
 				}
 			}else {
@@ -115,6 +124,7 @@ public class AttachmentS3Controller {
 			LinkedHashMap<String, Object> m = new LinkedHashMap<String, Object>();
 			m.put("message", "Username/password/note id is incorrect");
 			mapList.add(m);
+			logger.info("Username/password/note id is incorrect - UNAUTHORIZED "+ AttachmentS3Controller.class);
 			return new ResponseEntity<List<Map<String, Object>>>(mapList, HttpStatus.UNAUTHORIZED);
 		}
 	}
@@ -123,6 +133,7 @@ public class AttachmentS3Controller {
 	@RequestMapping(value = "/note/{noteId}/attachments/{attId}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Map<String, Object>> deleteAttachment(HttpServletRequest request, @PathVariable String noteId,
 			@PathVariable String attId) {
+		statsDClient.incrementCounter("endpoint.deleteattachment.http.delete");
 		String header = request.getHeader("Authorization");
 		LinkedHashMap<String, Object> m = new LinkedHashMap<String, Object>();
 		User user = methods.checkBadRequest(header, userService);
@@ -136,12 +147,14 @@ public class AttachmentS3Controller {
 						String path = url.getPath();
 						s3ServiceImpl.deleteFile(path.split("/")[2]);
 						attachmentDao.delete(att);
+						logger.info("Attachment Deleted - NO_CONTENT "+ AttachmentS3Controller.class);
 						return new ResponseEntity<Map<String, Object>>(m, HttpStatus.NO_CONTENT);
 					} catch (Exception e) {
 						m.put("message", "Error in thr file " + e);
 						return new ResponseEntity<Map<String, Object>>(m, HttpStatus.UNPROCESSABLE_ENTITY);
 					}
 				} else {
+					logger.info("There is no attachment for id - BAD_REQUEST "+ AttachmentS3Controller.class);
 					m.put("message", "There is no attachment for given id");
 					return new ResponseEntity<Map<String, Object>>(m, HttpStatus.BAD_REQUEST);
 				}
@@ -161,6 +174,7 @@ public class AttachmentS3Controller {
 	public ResponseEntity<Map<String, Object>> updateAttachment(HttpServletRequest request, @PathVariable String noteId,
 			@PathVariable String attId, @RequestParam(value = "file") MultipartFile[] files) {
 		String header = request.getHeader("Authorization");
+		statsDClient.incrementCounter("endpoint.updateattachment.http.put");
 		LinkedHashMap<String, Object> m = new LinkedHashMap<String, Object>();
 		User user = methods.checkBadRequest(header, userService);
 		if (user != null) {
@@ -184,9 +198,11 @@ public class AttachmentS3Controller {
 							att.setAttachmentFileName(files[0].getOriginalFilename());
 							att.setAttachmentSize(String.valueOf(files[0].getSize()));
 							attachmentDao.save(att);
+							logger.info("Updated Attachment- NO_CONTENT "+ AttachmentS3Controller.class);
 							return new ResponseEntity<Map<String, Object>>(m, HttpStatus.NO_CONTENT);
 						} catch (Exception e) {
 							m.put("message", "Error in thr file " + e);
+							logger.error("Error in adding file Created - UNPROCESSABLE_ENTITY "+ AttachmentS3Controller.class);
 							return new ResponseEntity<Map<String, Object>>(m, HttpStatus.UNPROCESSABLE_ENTITY);
 						}
 					} else {
@@ -212,6 +228,7 @@ public class AttachmentS3Controller {
 	public ResponseEntity<List<Map<String, Object>>> registerNote(HttpServletRequest request,
 			@PathVariable String noteId) {
 		String header = request.getHeader("Authorization");
+		statsDClient.incrementCounter("endpoint.getattachment.http.get");
 		List<Map<String, Object>> mapList = new ArrayList<Map<String, Object>>();
 		User user = methods.checkBadRequest(header, userService);
 		if (user != null) {
@@ -224,6 +241,7 @@ public class AttachmentS3Controller {
 					map.put("content", a.getAttachmentUrl());
 					mapList.add(map);
 				}
+				logger.info("Get Attachment- OK "+ AttachmentS3Controller.class);
 				return new ResponseEntity<List<Map<String, Object>>>(mapList, HttpStatus.OK);
 			} else {
 				LinkedHashMap<String, Object> m = new LinkedHashMap<String, Object>();
