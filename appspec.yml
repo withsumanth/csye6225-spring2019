@@ -1,11 +1,24 @@
 version: 0.0
 os: linux
 files:
-  - source: webapp/CloudWebApp/target/webapp.war
+  - source: webapp/CloudWebApp/target/ROOT.war
     destination: /opt/tomcat/webapps
+  - source: infrastructure/aws/codedeploy/cloudwatch-config.json
+    destination: /opt
 hooks:
   AfterInstall:
    - location: ./infrastructure/aws/codedeploy/afterInstall.sh
      timeout: 180
      runas: centos
- 
+  BeforeInstall:
+     - location: ./infrastructure/aws/codedeploy/beforeinstall.sh
+       timeout: 180
+       runas: centos
+  ApplicationStart:
+   - location: ./infrastructure/aws/codedeploy/applicationStart.sh
+     timeout: 180
+     runas: centos
+  ApplicationStop:
+   - location: ./infrastructure/aws/codedeploy/applicationStop.sh
+     timeout: 180
+     runas: centos
