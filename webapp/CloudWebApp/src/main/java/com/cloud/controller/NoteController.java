@@ -224,9 +224,4 @@ public class NoteController {
 			return new ResponseEntity<List<Map<String, Object>>>(mapList, HttpStatus.UNAUTHORIZED);
 		}
 	}
-	
-	@RequestMapping(value = "/resetPassword", method = RequestMethod.POST, produces = "application/json")
-	  public String forgotPassword(@RequestBody User user) {
-		  statsDClient.incrementCounter("endpoint.resetPassowrd.http.get");
-	}
 }
