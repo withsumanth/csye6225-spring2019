@@ -11,6 +11,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Base64;
 import java.util.Date;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -161,25 +163,34 @@ public class UserController {
 		}
 	}
 
-	@RequestMapping(value = "/resetPassword", method = RequestMethod.POST, produces = "application/json")
-	public ResponseEntity<Map<String, Object>> forgotPassword(@RequestBody User user) {
+	@RequestMapping(value = "/reset", method = RequestMethod.POST, produces = "application/json")
+	public ResponseEntity<Map<String, Object>> forgotPassword(@RequestBody String body) {
+		try {
 		statsDClient.incrementCounter("endpoint.resetPassword.http.post");
+		JSONObject jsonBody=new JSONObject(body);
 		Map<String, Object> m = new HashMap<String, Object>();
-		User userExists = userService.findByUserEmail(user.getUserEmail());
-		//if (userExists != null) {
+		User userExists = userService.findByUserEmail(jsonBody.get("email").toString());
+		if (userExists != null) {
 			AmazonSNS sns = AmazonSNSClientBuilder.standard().withCredentials(new DefaultAWSCredentialsProviderChain()).build();
-			String topic = sns.createTopic("password_reset").getTopicArn();
-			String emailJson = "{ \"email\":\""+user.getUserEmail()+"\"}";
-			PublishRequest pubRequest = new PublishRequest(topic, emailJson);
+			String topic = sns.createTopic("password_Reset").getTopicArn();
+			
+			PublishRequest pubRequest = new PublishRequest(topic, body);
 	        sns.publish(pubRequest);
 			logger.info("Email sent successfully - CREATED " + UserController.class);
 			m.put("message", "Email sent");
 			m.put("status", HttpStatus.CREATED.toString());
 			return new ResponseEntity<Map<String, Object>>(m, HttpStatus.CREATED);
-		/*} else {
+		} else {
 			m.put("message", "Username does not exist");
 			logger.info("Username does not exist - BAD_REQUEST " + UserController.class);
 			return new ResponseEntity<Map<String, Object>>(m, HttpStatus.BAD_REQUEST);
-		}*/
+		}
+		}
+		catch (Exception e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+		return null;
+		
 	}
 }
