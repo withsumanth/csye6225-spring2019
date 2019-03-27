@@ -161,7 +161,7 @@ public class UserController {
 		}
 	}
 
-	@RequestMapping(value = "/resetPassword", method = RequestMethod.POST, produces = "application/json")
+	@RequestMapping(value = "/reset", method = RequestMethod.POST, produces = "application/json")
 	public ResponseEntity<Map<String, Object>> forgotPassword(@RequestBody User user) {
 		statsDClient.incrementCounter("endpoint.resetPassword.http.post");
 		Map<String, Object> m = new HashMap<String, Object>();
@@ -171,9 +171,8 @@ public class UserController {
 			String topic = sns.createTopic("password_reset").getTopicArn();
 			String emailJson = "{ \"email\":\""+user.getUserEmail()+"\"}";
 			PublishRequest pubRequest = new PublishRequest(topic, emailJson);
-	        sns.publish(pubRequest);
+			sns.publish(pubRequest);
 			logger.info("Email sent successfully - CREATED " + UserController.class);
-			m.put("message", "Email sent");
 			m.put("status", HttpStatus.CREATED.toString());
 			return new ResponseEntity<Map<String, Object>>(m, HttpStatus.CREATED);
 		} else {
