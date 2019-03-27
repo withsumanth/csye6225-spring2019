@@ -172,7 +172,7 @@ public class UserController {
 		User userExists = userService.findByUserEmail(jsonBody.get("email").toString());
 		if (userExists != null) {
 			AmazonSNS sns = AmazonSNSClientBuilder.standard().withCredentials(new DefaultAWSCredentialsProviderChain()).build();
-			String topic = sns.createTopic("password_Reset").getTopicArn();
+			String topic = sns.createTopic("password_reset").getTopicArn();
 			
 			PublishRequest pubRequest = new PublishRequest(topic, body);
 	        sns.publish(pubRequest);
