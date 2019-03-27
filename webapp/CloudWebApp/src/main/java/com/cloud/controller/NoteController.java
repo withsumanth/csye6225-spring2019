@@ -190,7 +190,7 @@ public class NoteController {
 	}
 	
 	//Get all the notes of a user
-	@RequestMapping(value = "/notenivetha", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value = "/note", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<List<Map<String, Object>>> registerNote(HttpServletRequest request) {
 		String header = request.getHeader("Authorization");
 		statsDClient.incrementCounter("endpoint.getallnote.http.get");
