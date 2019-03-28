@@ -121,6 +121,41 @@
             ]
          }
       },
+      
+      "CircleCIUpdateLambda":{
+         "Type":"AWS::IAM::Policy",
+         "Properties":{
+            "PolicyDocument":{
+               "Version":"2012-10-17",
+               "Statement":[
+                  {
+                     "Effect":"Allow",
+                     "Action":[
+                       "lambda:UpdateFunctionCode"
+                     ],
+                     "Resource":[
+                        {
+                           "Fn::Join":[
+                              "",
+                              [
+                                 "arn:aws:lambda:us-east-1:",
+                                 {
+                                    "Ref":"accid"
+                                 },
+                                 ":function:PasswordResetLambda"
+                              ]
+                           ]
+                        }
+                     ]
+                  }
+               ]
+            },
+            "PolicyName":"Circle-CI-Update-Lambda-Function",
+            "Users":[
+               "circleci"
+            ]
+         }
+      },
       "CirlceCICodeDeploy":{
          "Type":"AWS::IAM::Policy",
          "Properties":{
@@ -282,10 +317,36 @@
             "ManagedPolicyArns":[
                "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
             ],
-            "Path":"/",
+            "Policies": [ {
+               "PolicyName": "SNSCreatePublishPolicy",
+               "PolicyDocument": {
+                  "Version" : "2012-10-17",
+                  "Statement": [ {
+                     "Effect": "Allow",
+                     "Action": [
+                        "sns:Publish",
+                        "sns:CreateTopic",
+                        "sns:ConfirmSubscription"
+                     ],
+                     "Resource": [{
+                        "Fn::Join":[
+                           "",
+                           [
+                              "arn:aws:sns:us-east-1:",
+                              {
+                                 "Ref":"accid"
+                              },
+                              ":password_reset"
+                           ]
+                        ]
+                     }]
+                  } ]
+               }
+               } ],
+               "Path":"/",
             "RoleName":"CodeDeployEC2ServiceRole"
-         }
-      },
+            }            
+         },
 
       "CodeDeployEC2InstanceProfile" : {
          "Type" : "AWS::IAM::InstanceProfile",
@@ -324,7 +385,97 @@
             "Path":"/",
             "RoleName":"CodeDeployServiceRole"
          }
-      }
+      },
+      
+      "LambdaFunctionPolicy":{
+         "DependsOn": [
+            "LambdaFunctionRole"
+         ],
+         "Type":"AWS::IAM::Policy",
+         "Properties":{
+            "PolicyDocument":{
+               "Version": "2012-10-17",
+               "Statement": [{
+                     "Effect": "Allow",
+                     "Action": [
+                        "dynamodb:BatchGetItem",
+                        "dynamodb:GetItem",
+                        "dynamodb:Query",
+                        "dynamodb:BatchWriteItem",
+                        "dynamodb:PutItem",
+                        "dynamodb:UpdateItem"
+                     ],
+                     "Resource": [{
+                        "Fn::Join":[
+                           "",
+                           [
+                              "arn:aws:dynamodb:us-east-1:",
+                              {
+                                 "Ref":"accid"
+                              },
+                              ":table/csye6225"
+                           ]
+                        ]
+                     }]
+                  },
+                  {
+                     "Effect": "Allow",
+                     "Action":[
+                        "SES:SendEmail",
+                        "SES:SendRawEmail"
+                      ],
+                     "Resource": [{
+                        "Fn::Join":[
+                           "",
+                           [
+                              "arn:aws:ses:us-east-1:",
+                              {
+                                 "Ref":"accid"
+                              },
+                              ":identity/",
+                              {"Ref" : "s3bucket"}
+                           ]
+                              
+                           
+                        ]
+                     }]
+                  }
+               ]
+            },
+            "PolicyName":"LambdaFunctionPolicy",
+            "Roles":[
+               {
+                  "Ref":"LambdaFunctionRole"
+               }
+            ]
+         }
+      },
+         "LambdaFunctionRole":{
+            "Type":"AWS::IAM::Role",
+            "Properties":{
+               "AssumeRolePolicyDocument":{
+                  "Version":"2012-10-17",
+                  "Statement":[
+                     {
+                        "Sid":"",
+                        "Effect":"Allow",
+                        "Principal":{
+                           "Service":[
+                              "lambda.amazonaws.com"
+                           ]
+                        },
+                        "Action":"sts:AssumeRole"
+                     }
+                  ]
+               },
+               "ManagedPolicyArns":[
+                  "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+               ],
+               "Path":"/",
+               "RoleName":"LambdaFunctionRole"
+            }
+         }
+      
    },
    "Outputs" : {
      "CodeDeployServiceRoleArn" : {
@@ -342,6 +493,15 @@
        "Export" : {
          "Name" : "CodeDeployEC2InstanceProfile"
        }
-     }
+     },
+     "LambdaFunctionRoleArn" : {
+         "Description" : "Lambda Function Role",
+         "Value" : {
+         "Fn::GetAtt" : ["LambdaFunctionRole", "Arn"]
+         },
+         "Export" : {
+         "Name" : "LambdaFunctionRoleOutput"
+         }
+      }
     }
 }
