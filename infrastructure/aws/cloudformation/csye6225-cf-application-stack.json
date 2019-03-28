@@ -12,6 +12,8 @@
       },
       "s3Bucket":{
          "Type":"String"
+      },"domainName":{
+         "Type":"String"
       },
       "DBUsername":{
          "Default":"csye6225master",
@@ -219,13 +221,13 @@
          "Properties":{
             "AttributeDefinitions":[
                {
-                  "AttributeName":"id",
+                  "AttributeName":"email",
                   "AttributeType":"S"
                }
             ],
             "KeySchema":[
                {
-                  "AttributeName":"id",
+                  "AttributeName":"email",
                   "KeyType":"HASH"
                }
             ],
@@ -233,7 +235,17 @@
                "ReadCapacityUnits":2,
                "WriteCapacityUnits":2
             },
-            "TableName":"csye6225"
+            "TableName":"csye6225",
+            "TimeToLiveSpecification":{
+               "AttributeName" : "expiration",
+               "Enabled" : true
+             },
+             "Tags":[
+               {
+                  "Key":"Name",
+                  "Value":"csye6225DynamoDB"
+               }
+            ] 
          }
       },
       "RDSDB":{
@@ -297,5 +309,6 @@
             }
          }
       }
+
    }
 }
