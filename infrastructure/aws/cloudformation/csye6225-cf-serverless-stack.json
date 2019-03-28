@@ -1,0 +1,115 @@
+{
+   "AWSTemplateFormatVersion":"2010-09-09",
+   "Parameters":{
+      "domainName":{
+         "Type":"String"
+      }
+   },
+   "Resources":{
+   "PasswordResetLambda": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+         "FunctionName" : "PasswordResetLambda",
+         "Runtime" : "nodejs8.10",
+         "Timeout": 180,
+         "Role" : {"Fn::ImportValue":"LambdaFunctionRoleOutput"}, 
+         "MemorySize" : "256",
+         "Handler" : "index.handler",
+         "Environment" : { 
+                  "Variables" : {
+                     "DynamoDBEndPoint":"dynamodb.us-east-1.amazonaws.com",
+                     "TTL_MINS":"20",
+                     "domain": {"Ref":"domainName"}
+                     }
+            },
+            "Code": {
+               "ZipFile": "exports.handler = (event, context, callback) => {\n    callback(null, \"Hello World!\");\n};\n"
+             }
+         }
+        
+  },
+
+   "PasswordReset" : {
+      "Type" : "AWS::SNS::Topic",
+      "Properties" : {
+         "Subscription" : [
+            { "Endpoint" : { "Fn::GetAtt" : [ "PasswordResetLambda", "Arn" ] }, 
+              "Protocol" : "lambda" 
+            }
+         ],
+         "TopicName" :"password_reset"
+      }
+   },
+
+
+   "SNStopicpolicy":{
+   "Type" : "AWS::SNS::TopicPolicy",
+   "Properties" :
+   {
+      "PolicyDocument" : {
+         "Version": "2008-10-17",
+         "Id": "__default_policy_ID",
+         "Statement": [
+            {
+               "Sid": "__default_statement_ID",
+               "Effect": "Allow",
+               "Principal": {
+               "AWS": "*"
+               },
+               "Action": [
+               "SNS:Publish",
+               "SNS:DeleteTopic",
+               "SNS:ListSubscriptionsByTopic",
+               "SNS:GetTopicAttributes",
+               "SNS:Receive",
+               "SNS:AddPermission",
+               "SNS:Subscribe"
+               ],
+               "Resource": {"Ref": "PasswordReset"},
+               "Condition": {
+               "StringEquals": {
+                  "AWS:SourceOwner": {
+                     "Ref": "AWS::AccountId"
+                  }
+               }
+               }
+            },
+            {
+               "Sid": "__console_pub_0",
+               "Effect": "Allow",
+               "Principal": {
+               "AWS": "*"
+               },
+               "Action": "SNS:Publish",
+               "Resource": {"Ref": "PasswordReset"}
+            },
+            {
+               "Sid": "__console_sub_0",
+               "Effect": "Allow",
+               "Principal": {
+               "AWS": "*"
+               },
+               "Action": [
+               "SNS:Subscribe",
+               "SNS:Receive"
+               ],
+               "Resource": {"Ref": "PasswordReset"}
+            }
+         ]
+         },
+      "Topics" : [ {"Ref": "PasswordReset"} ]
+   }
+   },
+   "lambdaPermission": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": { "Ref": "PasswordResetLambda"},
+        "Principal": "sns.amazonaws.com",
+        "SourceArn": { "Ref": "PasswordReset" }
+      },
+      "Type": "AWS::Lambda::Permission"
+    }
+
+
+   }
+}
