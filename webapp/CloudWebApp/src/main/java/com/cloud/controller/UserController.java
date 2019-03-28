@@ -11,8 +11,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Base64;
 import java.util.Date;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -166,7 +164,6 @@ public class UserController {
 	@RequestMapping(value = "/reset", method = RequestMethod.POST, produces = "application/json")
 	public ResponseEntity<Map<String, Object>> forgotPassword(@RequestBody User user) {
 		statsDClient.incrementCounter("endpoint.resetPassword.http.post");
-		JSONObject jsonBody=new JSONObject(body);
 		Map<String, Object> m = new HashMap<String, Object>();
 		User userExists = userService.findByUserEmail(user.getUserEmail());
 		if (userExists != null) {
