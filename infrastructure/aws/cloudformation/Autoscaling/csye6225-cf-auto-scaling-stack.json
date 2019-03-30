@@ -15,6 +15,12 @@
       },"domainName":{
          "Type":"String"
       },
+      "hostedZoneID":{
+         "Type":"String"
+      },
+      "certificateARN":{
+         "Type":"String"
+      },
       "DBUsername":{
          "Default":"csye6225master",
          "Description":"The database admin account username",
@@ -38,13 +44,13 @@
                   "IpProtocol":"tcp",
                   "FromPort":"443",
                   "ToPort":"443",
-                  "CidrIp":"0.0.0.0/0"
+                  "SourceSecurityGroupId" : {"Ref":"loadbalancerSecurityGroup"}
                },
                {
                   "IpProtocol":"tcp",
                   "FromPort":"8080",
                   "ToPort":"8080",
-                  "CidrIp":"0.0.0.0/0"
+                  "SourceSecurityGroupId" : {"Ref":"loadbalancerSecurityGroup"}
                },
                {
                   "IpProtocol":"tcp",
@@ -56,7 +62,8 @@
             "VpcId":{
                "Fn::ImportValue":"csye6225-cf-vpc"
             }
-         }
+         },
+         "DependsOn":"loadbalancerSecurityGroup"
       },
       "dbSecurityGroup":{
          "Type":"AWS::EC2::SecurityGroup",
@@ -72,6 +79,30 @@
                   "ToPort":3306
                }
             ],
+            "VpcId":{
+               "Fn::ImportValue":"csye6225-cf-vpc"
+            }
+         }
+      },
+      "loadbalancerSecurityGroup":{
+         "Type":"AWS::EC2::SecurityGroup",
+         "Properties":{
+            "GroupDescription":"Enable HTTP access via port 80, SSH access via port 22",
+            "SecurityGroupIngress":[
+               {
+                  "IpProtocol":"tcp",
+                  "FromPort":"443",
+                  "ToPort":"443",
+                  "CidrIp":"0.0.0.0/0"
+               },
+               {
+                  "IpProtocol":"tcp",
+                  "FromPort":"8080",
+                  "ToPort":"8080",
+                  "CidrIp":"0.0.0.0/0"
+               }
+            ], 
+            
             "VpcId":{
                "Fn::ImportValue":"csye6225-cf-vpc"
             }
@@ -102,7 +133,7 @@
             ]
          }
       },
-      "asg_launch_config":{
+      "asglaunchconfig":{
          "Type":"AWS::AutoScaling::LaunchConfiguration",
          "Properties":{
             
@@ -208,8 +239,8 @@
             },
             "LaunchConfigurationName" : "asg_launch_config",
             "AssociatePublicIpAddress":true
-         },
-         "DependsOn":"RDSDB"
+         }
+        
       },
 
       "WebServerGroup":{
@@ -217,7 +248,7 @@
          "Properties" : {
             "AutoScalingGroupName" : "WebServerGroup",
             "Cooldown" : "60",
-            "LaunchConfigurationName" : {"Ref": "asg_launch_config"},
+            "LaunchConfigurationName" : {"Ref": "asglaunchconfig"},
             "MaxSize" : "10",
             "MinSize" : "3",
             "DesiredCapacity" : "3",
@@ -226,11 +257,12 @@
             "Tags":[
                {
                   "Key":"codeDeployKey",
-                  "Value":"codeDeployValue"
+                  "Value":"codeDeployValue",
+                  "PropagateAtLaunch":true
                }
             ],
             "TargetGroupARNs" : [ {"Ref":"ALBTargetGroup"}],
-            "VPCZoneIdentifier" : [{"Fn::ImportValue":"csye6225-cf-websubnet1"}]
+            "VPCZoneIdentifier" : [{"Fn::ImportValue":"csye6225-cf-websubnet1"},{"Fn::ImportValue":"csye6225-cf-dbsubnet1"}]
          }
       },
 
@@ -245,6 +277,7 @@
            "ScalingAdjustment": "1"
          }
        },
+
        "WebServerScaleDownPolicy": {
          "Type": "AWS::AutoScaling::ScalingPolicy",
          "Properties": {
@@ -256,6 +289,7 @@
            "ScalingAdjustment": "-1"
          }
        },
+
        "CPUAlarmHigh": {
          "Type": "AWS::CloudWatch::Alarm",
          "Properties": {
@@ -283,10 +317,11 @@
            "Unit":"Percent"
          }
        },
+       
        "CPUAlarmLow": {
          "Type": "AWS::CloudWatch::Alarm",
          "Properties": {
-           "AlarmDescription": "Scale-down if CPU < 70% for 10 minutes",
+           "AlarmDescription": "Scale-down if CPU < 5% for 2 minutes",
            "MetricName": "CPUUtilization",
            "Namespace": "AWS/EC2",
            "Statistic": "Average",
@@ -309,7 +344,100 @@
            "ComparisonOperator": "LessThanThreshold",
            "Unit":"Percent"
          }
-       },     
+       }, 
+
+       "ApplicationLoadBalancer" : {
+         "Type" : "AWS::ElasticLoadBalancingV2::LoadBalancer",
+         "Properties" : 
+           {    
+             "IpAddressType" : "ipv4",
+             "SecurityGroups" : [ {"Ref":"loadbalancerSecurityGroup"} ],
+             "Subnets" :[{"Fn::ImportValue":"csye6225-cf-websubnet1"}, {"Fn::ImportValue":"csye6225-cf-dbsubnet1"}],
+             "Name" : "ApplicationLoadBalancer",
+             "Scheme" : "internet-facing",
+             "Tags" : [  {
+               "Key": "Name",
+               "Value": "Loadbalancer"
+           } ],
+             "Type" : "application"
+           }
+         
+       },
+
+       "ALBListenerService": {
+         "Type" : "AWS::ElasticLoadBalancingV2::Listener",
+         "Properties" : {
+           "DefaultActions" : [{
+             "Type" : "forward",
+             "TargetGroupArn" : { "Ref" : "ALBTargetGroup" }
+           }
+         ],
+           "LoadBalancerArn" : { "Ref" : "ApplicationLoadBalancer" },
+           "Port" : "443",
+           "Protocol" : "HTTPS",
+           "Certificates" : [ 
+             { "CertificateArn" :
+               { 
+                  "Ref" : "certificateARN"
+               }
+           }
+           ]
+         }
+       },
+       "ALBListenerService1": {
+         "Type" : "AWS::ElasticLoadBalancingV2::Listener",
+         "Properties" : {
+           "DefaultActions" : [
+           {
+            "Type" : "redirect",
+            "RedirectConfig":{
+               "Host" : "#{host}",
+               "Path" : "/#{path}",
+               "Port" : "443",
+               "Protocol" : "HTTPS",
+               "StatusCode" : "HTTP_301"
+             }
+           }
+         ],
+           "LoadBalancerArn" : { "Ref" : "ApplicationLoadBalancer" },
+           "Port" : "80",
+           "Protocol" : "HTTP"
+           
+         }
+       },
+      
+   "ALBTargetGroup":{
+     "Type" : "AWS::ElasticLoadBalancingV2::TargetGroup",
+     "Properties" : {
+       "HealthCheckIntervalSeconds" : 30,
+       "HealthCheckPath" : "/healthCheck",
+       "HealthCheckPort" : "443",
+       "HealthCheckProtocol" : "HTTPS",
+       "HealthCheckTimeoutSeconds" : 7,
+       "HealthyThresholdCount" : 3,
+       "Name" : "ALBTargetGroup",
+       "Port" : 8080,
+       "Protocol" : "HTTP",
+       "TargetType":"instance",
+       "UnhealthyThresholdCount" : 5,
+       "VpcId" : { "Fn::ImportValue":"csye6225-cf-vpc"}
+     }
+   },
+      "DNSresourcerecord":{
+         "Type" : "AWS::Route53::RecordSet",
+         "Properties" : {
+         "AliasTarget": {
+                  "HostedZoneId" : { "Fn::GetAtt" : ["ApplicationLoadBalancer", "CanonicalHostedZoneID"] },
+                  "DNSName" : { "Fn::GetAtt" : ["ApplicationLoadBalancer","DNSName"] }
+            },
+         "HostedZoneId" : {"Ref":"hostedZoneID"},
+         "Name" :  {"Ref":"domainName"},
+         "Type" : "A"
+         
+            }
+      },
+
+   
       "DynamoDBTable":{
          "Type":"AWS::DynamoDB::Table",
          "Properties":{
