@@ -232,6 +232,7 @@
                         },
                         "chmod +x /opt/tomcat/bin/setenv.sh",
                         "systemctl enable tomcat.service",
+                        "systemctl stop tomcat.service",
                         "systemctl start tomcat.service"
                      ]
                   ]
