@@ -400,7 +400,7 @@
            }
          ],
            "LoadBalancerArn" : { "Ref" : "ApplicationLoadBalancer" },
-           "Port" : "80",
+           "Port" : "8080",
            "Protocol" : "HTTP"
            
          }
@@ -410,9 +410,9 @@
      "Type" : "AWS::ElasticLoadBalancingV2::TargetGroup",
      "Properties" : {
        "HealthCheckIntervalSeconds" : 30,
-       "HealthCheckPath" : "/healthCheck",
-       "HealthCheckPort" : "443",
-       "HealthCheckProtocol" : "HTTPS",
+       "HealthCheckPath" : "/",
+       "HealthCheckPort" : "8080",
+       "HealthCheckProtocol" : "HTTP",
        "HealthCheckTimeoutSeconds" : 7,
        "HealthyThresholdCount" : 3,
        "Name" : "ALBTargetGroup",
@@ -420,7 +420,10 @@
        "Protocol" : "HTTP",
        "TargetType":"instance",
        "UnhealthyThresholdCount" : 5,
-       "VpcId" : { "Fn::ImportValue":"csye6225-cf-vpc"}
+       "VpcId" : { "Fn::ImportValue":"csye6225-cf-vpc"},
+       "Matcher":{
+            "HttpCode" : "401"
+         }
      }
    },
       "DNSresourcerecord":{
@@ -502,7 +505,7 @@
       },
       "DEPLOYMENTGROUP":{
          "Type":"AWS::CodeDeploy::DeploymentGroup",
-         "DependsOn":"CODEDEPLOYAPPLICATION",
+         "DependsOn":["WebServerGroup","ALBTargetGroup","CODEDEPLOYAPPLICATION"],
          "Properties":{
             "ApplicationName":{
                "Ref":"CODEDEPLOYAPPLICATION"
@@ -519,16 +522,18 @@
                ]
             },
             "DeploymentConfigName":"CodeDeployDefault.AllAtOnce",
-            "Ec2TagFilters":[
-               {
-                  "Key":"codeDeployKey",
-                  "Type":"KEY_AND_VALUE",
-                  "Value":"codeDeployValue"
-               }
-            ],
+            
             "ServiceRoleArn":{
                "Fn::ImportValue":"CodeDeployServiceRoleOutput"
-            }
+            },
+            "AutoScalingGroups":[{"Ref":"WebServerGroup"}],
+            "LoadBalancerInfo" : {
+               "TargetGroupInfoList" : [ 
+                  { 
+                     "Name": { "Fn::GetAtt": ["ALBTargetGroup", "TargetGroupName"] } 
+                  } 
+               ]
+           }
          }
       }
 
