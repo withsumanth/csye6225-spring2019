@@ -233,7 +233,8 @@
                         "chmod +x /opt/tomcat/bin/setenv.sh",
                         "systemctl enable tomcat.service",
                         "systemctl stop tomcat.service",
-                        "systemctl start tomcat.service"
+                        "systemctl start tomcat.service",
+                        "touch completed.txt"
                      ]
                   ]
                }
@@ -513,7 +514,7 @@
             },
             "DeploymentGroupName":"csye6225-webapp-deployment",
             "DeploymentStyle":{
-               "DeploymentOption":"WITHOUT_TRAFFIC_CONTROL",
+               "DeploymentOption":"WITH_TRAFFIC_CONTROL",
                "DeploymentType":"IN_PLACE"
             },
             "AutoRollbackConfiguration":{
