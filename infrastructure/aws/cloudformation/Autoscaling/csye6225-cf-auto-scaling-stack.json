@@ -101,8 +101,8 @@
                   "ToPort":"8080",
                   "CidrIp":"0.0.0.0/0"
                }
-            ], 
-            
+            ],
+
             "VpcId":{
                "Fn::ImportValue":"csye6225-cf-vpc"
             }
@@ -136,7 +136,7 @@
       "asglaunchconfig":{
          "Type":"AWS::AutoScaling::LaunchConfiguration",
          "Properties":{
-            
+
             "ImageId":{
                "Ref":"amiId"
             },
@@ -147,7 +147,7 @@
             "IamInstanceProfile" : {
                "Fn::ImportValue":"CodeDeployEC2InstanceProfile"
             },
-            
+
             "BlockDeviceMappings":[
                {
                   "DeviceName":"/dev/sda1",
@@ -242,14 +242,14 @@
             "LaunchConfigurationName" : "asg_launch_config",
             "AssociatePublicIpAddress":true
          }
-        
+
       },
 
       "WebServerGroup":{
          "Type" : "AWS::AutoScaling::AutoScalingGroup",
          "Properties" : {
             "AutoScalingGroupName" : "WebServerGroup",
-            "Cooldown" : "60",
+            "Cooldown" : "30",
             "LaunchConfigurationName" : {"Ref": "asglaunchconfig"},
             "MaxSize" : "10",
             "MinSize" : "3",
@@ -275,7 +275,7 @@
            "AutoScalingGroupName": {
              "Ref": "WebServerGroup"
            },
-           "Cooldown": "60",
+           "Cooldown": "30",
            "ScalingAdjustment": "1"
          }
        },
@@ -319,7 +319,7 @@
            "Unit":"Percent"
          }
        },
-       
+
        "CPUAlarmLow": {
          "Type": "AWS::CloudWatch::Alarm",
          "Properties": {
@@ -346,12 +346,12 @@
            "ComparisonOperator": "LessThanThreshold",
            "Unit":"Percent"
          }
-       }, 
+       },
 
        "ApplicationLoadBalancer" : {
          "Type" : "AWS::ElasticLoadBalancingV2::LoadBalancer",
-         "Properties" : 
-           {    
+         "Properties" :
+           {
              "IpAddressType" : "ipv4",
              "SecurityGroups" : [ {"Ref":"loadbalancerSecurityGroup"} ],
              "Subnets" :[{"Fn::ImportValue":"csye6225-cf-websubnet1"}, {"Fn::ImportValue":"csye6225-cf-dbsubnet1"}],
@@ -363,9 +363,8 @@
            } ],
              "Type" : "application"
            }
-         
-       },
 
+       },
        "ALBListenerService": {
          "Type" : "AWS::ElasticLoadBalancingV2::Listener",
          "Properties" : {
@@ -377,9 +376,9 @@
            "LoadBalancerArn" : { "Ref" : "ApplicationLoadBalancer" },
            "Port" : "443",
            "Protocol" : "HTTPS",
-           "Certificates" : [ 
+           "Certificates" : [
              { "CertificateArn" :
-               { 
+               {
                   "Ref" : "certificateARN"
                }
            }
@@ -404,10 +403,10 @@
            "LoadBalancerArn" : { "Ref" : "ApplicationLoadBalancer" },
            "Port" : "8080",
            "Protocol" : "HTTP"
-           
+
          }
        },
-      
+
    "ALBTargetGroup":{
      "Type" : "AWS::ElasticLoadBalancingV2::TargetGroup",
      "Properties" : {
@@ -438,11 +437,11 @@
          "HostedZoneId" : {"Ref":"hostedZoneID"},
          "Name" :  {"Ref":"domainName"},
          "Type" : "A"
-         
+
             }
       },
 
-   
+
       "DynamoDBTable":{
          "Type":"AWS::DynamoDB::Table",
          "Properties":{
@@ -472,7 +471,7 @@
                   "Key":"Name",
                   "Value":"csye6225DynamoDB"
                }
-            ] 
+            ]
          }
       },
       "RDSDB":{
@@ -524,20 +523,28 @@
                ]
             },
             "DeploymentConfigName":"CodeDeployDefault.AllAtOnce",
-            
+
             "ServiceRoleArn":{
                "Fn::ImportValue":"CodeDeployServiceRoleOutput"
             },
             "AutoScalingGroups":[{"Ref":"WebServerGroup"}],
             "LoadBalancerInfo" : {
-               "TargetGroupInfoList" : [ 
-                  { 
-                     "Name": { "Fn::GetAtt": ["ALBTargetGroup", "TargetGroupName"] } 
-                  } 
+               "TargetGroupInfoList" : [
+                  {
+                     "Name": { "Fn::GetAtt": ["ALBTargetGroup", "TargetGroupName"] }
+                  }
                ]
            }
          }
       }
-
+   },
+   "Outputs" : {
+     "loadBalancer" : {
+       "Description" : "Application LoadBalancer",
+       "Value" : {"Ref" : "ApplicationLoadBalancer"},
+       "Export" : {
+         "Name" : "csye6225-load-balancer"
+       }
+     }
    }
 }
