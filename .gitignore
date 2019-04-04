@@ -63,3 +63,6 @@ tmp/
 *~.nib
 local.properties
 .loadpath
+
+*/results
+*/results/*
