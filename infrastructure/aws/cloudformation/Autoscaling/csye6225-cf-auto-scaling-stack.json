@@ -1,0 +1,543 @@
+{
+   "AWSTemplateFormatVersion":"2010-09-09",
+   "Parameters":{
+      "keyPair":{
+         "Type":"String"
+      },
+      "stackName":{
+         "Type":"String"
+      },
+      "amiId":{
+         "Type":"String"
+      },
+      "s3Bucket":{
+         "Type":"String"
+      },"domainName":{
+         "Type":"String"
+      },
+      "hostedZoneID":{
+         "Type":"String"
+      },
+      "certificateARN":{
+         "Type":"String"
+      },
+      "DBUsername":{
+         "Default":"csye6225master",
+         "Description":"The database admin account username",
+         "Type":"String",
+         "AllowedPattern":"[a-zA-Z][a-zA-Z0-9]*"
+      },
+      "DBPassword":{
+         "Default":"csye6225password",
+         "Description":"The database admin account password",
+         "Type":"String",
+         "AllowedPattern":"[a-zA-Z0-9]*"
+      }
+   },
+   "Resources":{
+      "webServerSecurityGroup":{
+         "Type":"AWS::EC2::SecurityGroup",
+         "Properties":{
+            "GroupDescription":"Enable HTTP access via port 80, SSH access via port 22",
+            "SecurityGroupIngress":[
+               {
+                  "IpProtocol":"tcp",
+                  "FromPort":"443",
+                  "ToPort":"443",
+                  "SourceSecurityGroupId" : {"Ref":"loadbalancerSecurityGroup"}
+               },
+               {
+                  "IpProtocol":"tcp",
+                  "FromPort":"8080",
+                  "ToPort":"8080",
+                  "SourceSecurityGroupId" : {"Ref":"loadbalancerSecurityGroup"}
+               },
+               {
+                  "IpProtocol":"tcp",
+                  "FromPort":"22",
+                  "ToPort":"22",
+                  "CidrIp":"0.0.0.0/0"
+               }
+            ],
+            "VpcId":{
+               "Fn::ImportValue":"csye6225-cf-vpc"
+            }
+         },
+         "DependsOn":"loadbalancerSecurityGroup"
+      },
+      "dbSecurityGroup":{
+         "Type":"AWS::EC2::SecurityGroup",
+         "Properties":{
+            "GroupDescription":"Security tag for web server",
+            "SecurityGroupIngress":[
+               {
+                  "SourceSecurityGroupId":{
+                     "Ref":"webServerSecurityGroup"
+                  },
+                  "FromPort":3306,
+                  "IpProtocol":"tcp",
+                  "ToPort":3306
+               }
+            ],
+            "VpcId":{
+               "Fn::ImportValue":"csye6225-cf-vpc"
+            }
+         }
+      },
+      "loadbalancerSecurityGroup":{
+         "Type":"AWS::EC2::SecurityGroup",
+         "Properties":{
+            "GroupDescription":"Enable HTTP access via port 80, SSH access via port 22",
+            "SecurityGroupIngress":[
+               {
+                  "IpProtocol":"tcp",
+                  "FromPort":"443",
+                  "ToPort":"443",
+                  "CidrIp":"0.0.0.0/0"
+               },
+               {
+                  "IpProtocol":"tcp",
+                  "FromPort":"8080",
+                  "ToPort":"8080",
+                  "CidrIp":"0.0.0.0/0"
+               }
+            ], 
+            
+            "VpcId":{
+               "Fn::ImportValue":"csye6225-cf-vpc"
+            }
+         }
+      },
+      "DBSubnetGroup":{
+         "Type":"AWS::RDS::DBSubnetGroup",
+         "Properties":{
+            "DBSubnetGroupDescription":"DB Subnet Group",
+            "DBSubnetGroupName":{
+               "Fn::Join":[
+                  "",
+                  [
+                     {
+                        "Ref":"stackName"
+                     },
+                     "-csye6225-db-subnetgroup"
+                  ]
+               ]
+            },
+            "SubnetIds":[
+               {
+                  "Fn::ImportValue":"csye6225-cf-dbsubnet1"
+               },
+               {
+                  "Fn::ImportValue":"csye6225-cf-dbsubnet2"
+               }
+            ]
+         }
+      },
+      "asglaunchconfig":{
+         "Type":"AWS::AutoScaling::LaunchConfiguration",
+         "Properties":{
+            
+            "ImageId":{
+               "Ref":"amiId"
+            },
+            "KeyName":{
+               "Ref":"keyPair"
+            },
+            "InstanceType":"t2.micro",
+            "IamInstanceProfile" : {
+               "Fn::ImportValue":"CodeDeployEC2InstanceProfile"
+            },
+            
+            "BlockDeviceMappings":[
+               {
+                  "DeviceName":"/dev/sda1",
+                  "Ebs":{
+                     "VolumeType":"gp2",
+                     "DeleteOnTermination":"true",
+                     "VolumeSize":"20"
+                  }
+               }
+            ],
+            "SecurityGroups":[
+               {
+                  "Ref":"webServerSecurityGroup"
+               }
+            ],
+            "UserData":{
+               "Fn::Base64":{
+                  "Fn::Join":[
+                     "\n",
+                     [
+                        "#!/bin/bash -xe ",
+                        "sudo su",
+                        "echo '#!/bin/sh' >> /opt/tomcat/bin/setenv.sh",
+                        {
+                           "Fn::Join":[
+                              "",
+                              [
+                                 "echo 'JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.url=\"jdbc:mysql://",
+                                 {
+                                    "Fn::GetAtt":[
+                                       "RDSDB",
+                                       "Endpoint.Address"
+                                    ]
+                                 },
+                                 ":3306/csye6225\"\"'>> /opt/tomcat/bin/setenv.sh \n"
+                              ]
+                           ]
+                        },
+                        {
+                           "Fn::Join":[
+                              "",
+                              [
+                                 "sudo echo 'JAVA_OPTS=\"$JAVA_OPTS -Dspring.profiles.active=dev\"'>> /opt/tomcat/bin/setenv.sh\n"
+                              ]
+                           ]
+                        },
+                        {
+                           "Fn::Join":[
+                              "",
+                              [
+                                 "sudo echo 'JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.username=",
+                                 {
+                                    "Ref":"DBUsername"
+                                 },
+                                 "\"' >> /opt/tomcat/bin/setenv.sh\n"
+                              ]
+                           ]
+                        },
+                        {
+                           "Fn::Join":[
+                              "",
+                              [
+                                 "sudo echo 'JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.password=",
+                                 {
+                                    "Ref":"DBPassword"
+                                 },
+                                 "\"' >> /opt/tomcat/bin/setenv.sh\n"
+                              ]
+                           ]
+                        },
+                        {
+                           "Fn::Join":[
+                              "",
+                              [
+                                 "sudo echo 'JAVA_OPTS=\"$JAVA_OPTS -Dbucket.name=",
+                                 {
+                                    "Ref":"s3Bucket"
+                                 },
+                                 "\"' >> /opt/tomcat/bin/setenv.sh\n"
+                              ]
+                           ]
+                        },
+                        "chmod +x /opt/tomcat/bin/setenv.sh",
+                        "systemctl enable tomcat.service",
+                        "systemctl stop tomcat.service",
+                        "systemctl start tomcat.service",
+                        "touch completed.txt"
+                     ]
+                  ]
+               }
+            },
+            "LaunchConfigurationName" : "asg_launch_config",
+            "AssociatePublicIpAddress":true
+         }
+        
+      },
+
+      "WebServerGroup":{
+         "Type" : "AWS::AutoScaling::AutoScalingGroup",
+         "Properties" : {
+            "AutoScalingGroupName" : "WebServerGroup",
+            "Cooldown" : "60",
+            "LaunchConfigurationName" : {"Ref": "asglaunchconfig"},
+            "MaxSize" : "10",
+            "MinSize" : "3",
+            "DesiredCapacity" : "3",
+            "HealthCheckType" : "EC2",
+            "HealthCheckGracePeriod" : 60,
+            "Tags":[
+               {
+                  "Key":"codeDeployKey",
+                  "Value":"codeDeployValue",
+                  "PropagateAtLaunch":true
+               }
+            ],
+            "TargetGroupARNs" : [ {"Ref":"ALBTargetGroup"}],
+            "VPCZoneIdentifier" : [{"Fn::ImportValue":"csye6225-cf-websubnet1"},{"Fn::ImportValue":"csye6225-cf-dbsubnet1"}]
+         }
+      },
+
+      "WebServerScaleUpPolicy": {
+         "Type": "AWS::AutoScaling::ScalingPolicy",
+         "Properties": {
+           "AdjustmentType": "ChangeInCapacity",
+           "AutoScalingGroupName": {
+             "Ref": "WebServerGroup"
+           },
+           "Cooldown": "60",
+           "ScalingAdjustment": "1"
+         }
+       },
+
+       "WebServerScaleDownPolicy": {
+         "Type": "AWS::AutoScaling::ScalingPolicy",
+         "Properties": {
+           "AdjustmentType": "ChangeInCapacity",
+           "AutoScalingGroupName": {
+             "Ref": "WebServerGroup"
+           },
+           "Cooldown": "60",
+           "ScalingAdjustment": "-1"
+         }
+       },
+
+       "CPUAlarmHigh": {
+         "Type": "AWS::CloudWatch::Alarm",
+         "Properties": {
+           "AlarmDescription": "Scale-up if CPU > 10% for 2 minutes",
+           "MetricName": "CPUUtilization",
+           "Namespace": "AWS/EC2",
+           "Statistic": "Average",
+           "Period": "60",
+           "EvaluationPeriods": "2",
+           "Threshold": "10",
+           "AlarmActions": [
+             {
+               "Ref": "WebServerScaleUpPolicy"
+             }
+           ],
+           "Dimensions": [
+             {
+               "Name": "AutoScalingGroupName",
+               "Value": {
+                 "Ref": "WebServerGroup"
+               }
+             }
+           ],
+           "ComparisonOperator": "GreaterThanThreshold",
+           "Unit":"Percent"
+         }
+       },
+       
+       "CPUAlarmLow": {
+         "Type": "AWS::CloudWatch::Alarm",
+         "Properties": {
+           "AlarmDescription": "Scale-down if CPU < 5% for 2 minutes",
+           "MetricName": "CPUUtilization",
+           "Namespace": "AWS/EC2",
+           "Statistic": "Average",
+           "Period": "60",
+           "EvaluationPeriods": "2",
+           "Threshold": "5",
+           "AlarmActions": [
+             {
+               "Ref": "WebServerScaleDownPolicy"
+             }
+           ],
+           "Dimensions": [
+             {
+               "Name": "AutoScalingGroupName",
+               "Value": {
+                 "Ref": "WebServerGroup"
+               }
+             }
+           ],
+           "ComparisonOperator": "LessThanThreshold",
+           "Unit":"Percent"
+         }
+       }, 
+
+       "ApplicationLoadBalancer" : {
+         "Type" : "AWS::ElasticLoadBalancingV2::LoadBalancer",
+         "Properties" : 
+           {    
+             "IpAddressType" : "ipv4",
+             "SecurityGroups" : [ {"Ref":"loadbalancerSecurityGroup"} ],
+             "Subnets" :[{"Fn::ImportValue":"csye6225-cf-websubnet1"}, {"Fn::ImportValue":"csye6225-cf-dbsubnet1"}],
+             "Name" : "ApplicationLoadBalancer",
+             "Scheme" : "internet-facing",
+             "Tags" : [  {
+               "Key": "Name",
+               "Value": "Loadbalancer"
+           } ],
+             "Type" : "application"
+           }
+         
+       },
+
+       "ALBListenerService": {
+         "Type" : "AWS::ElasticLoadBalancingV2::Listener",
+         "Properties" : {
+           "DefaultActions" : [{
+             "Type" : "forward",
+             "TargetGroupArn" : { "Ref" : "ALBTargetGroup" }
+           }
+         ],
+           "LoadBalancerArn" : { "Ref" : "ApplicationLoadBalancer" },
+           "Port" : "443",
+           "Protocol" : "HTTPS",
+           "Certificates" : [ 
+             { "CertificateArn" :
+               { 
+                  "Ref" : "certificateARN"
+               }
+           }
+           ]
+         }
+       },
+       "ALBListenerService1": {
+         "Type" : "AWS::ElasticLoadBalancingV2::Listener",
+         "Properties" : {
+           "DefaultActions" : [
+           {
+            "Type" : "redirect",
+            "RedirectConfig":{
+               "Host" : "#{host}",
+               "Path" : "/#{path}",
+               "Port" : "443",
+               "Protocol" : "HTTPS",
+               "StatusCode" : "HTTP_301"
+             }
+           }
+         ],
+           "LoadBalancerArn" : { "Ref" : "ApplicationLoadBalancer" },
+           "Port" : "8080",
+           "Protocol" : "HTTP"
+           
+         }
+       },
+      
+   "ALBTargetGroup":{
+     "Type" : "AWS::ElasticLoadBalancingV2::TargetGroup",
+     "Properties" : {
+       "HealthCheckIntervalSeconds" : 30,
+       "HealthCheckPath" : "/",
+       "HealthCheckPort" : "8080",
+       "HealthCheckProtocol" : "HTTP",
+       "HealthCheckTimeoutSeconds" : 7,
+       "HealthyThresholdCount" : 3,
+       "Name" : "ALBTargetGroup",
+       "Port" : 8080,
+       "Protocol" : "HTTP",
+       "TargetType":"instance",
+       "UnhealthyThresholdCount" : 5,
+       "VpcId" : { "Fn::ImportValue":"csye6225-cf-vpc"},
+       "Matcher":{
+            "HttpCode" : "401"
+         }
+     }
+   },
+      "DNSresourcerecord":{
+         "Type" : "AWS::Route53::RecordSet",
+         "Properties" : {
+         "AliasTarget": {
+                  "HostedZoneId" : { "Fn::GetAtt" : ["ApplicationLoadBalancer", "CanonicalHostedZoneID"] },
+                  "DNSName" : { "Fn::GetAtt" : ["ApplicationLoadBalancer","DNSName"] }
+            },
+         "HostedZoneId" : {"Ref":"hostedZoneID"},
+         "Name" :  {"Ref":"domainName"},
+         "Type" : "A"
+         
+            }
+      },
+
+   
+      "DynamoDBTable":{
+         "Type":"AWS::DynamoDB::Table",
+         "Properties":{
+            "AttributeDefinitions":[
+               {
+                  "AttributeName":"email",
+                  "AttributeType":"S"
+               }
+            ],
+            "KeySchema":[
+               {
+                  "AttributeName":"email",
+                  "KeyType":"HASH"
+               }
+            ],
+            "ProvisionedThroughput":{
+               "ReadCapacityUnits":2,
+               "WriteCapacityUnits":2
+            },
+            "TableName":"csye6225",
+            "TimeToLiveSpecification":{
+               "AttributeName" : "expiration",
+               "Enabled" : true
+             },
+             "Tags":[
+               {
+                  "Key":"Name",
+                  "Value":"csye6225DynamoDB"
+               }
+            ] 
+         }
+      },
+      "RDSDB":{
+         "Type":"AWS::RDS::DBInstance",
+         "Properties":{
+            "AllocatedStorage":"5",
+            "DBInstanceClass":"db.t2.medium",
+            "DBInstanceIdentifier":"csye6225-spring2019",
+            "DBSubnetGroupName":{
+               "Ref":"DBSubnetGroup"
+            },
+            "DBName":"csye6225",
+            "Engine":"mysql",
+            "EngineVersion":"5.6.37",
+            "MasterUsername":"csye6225master",
+            "MasterUserPassword":"csye6225password",
+            "MultiAZ":"false",
+            "PubliclyAccessible":"true",
+            "VPCSecurityGroups":[
+               {
+                  "Ref":"dbSecurityGroup"
+               }
+            ]
+         }
+      },
+      "CODEDEPLOYAPPLICATION":{
+         "Type":"AWS::CodeDeploy::Application",
+         "Properties":{
+            "ApplicationName":"csye6225-webapp",
+            "ComputePlatform":"Server"
+         }
+      },
+      "DEPLOYMENTGROUP":{
+         "Type":"AWS::CodeDeploy::DeploymentGroup",
+         "DependsOn":["WebServerGroup","ALBTargetGroup","CODEDEPLOYAPPLICATION"],
+         "Properties":{
+            "ApplicationName":{
+               "Ref":"CODEDEPLOYAPPLICATION"
+            },
+            "DeploymentGroupName":"csye6225-webapp-deployment",
+            "DeploymentStyle":{
+               "DeploymentOption":"WITH_TRAFFIC_CONTROL",
+               "DeploymentType":"IN_PLACE"
+            },
+            "AutoRollbackConfiguration":{
+               "Enabled":"true",
+               "Events":[
+                  "DEPLOYMENT_FAILURE"
+               ]
+            },
+            "DeploymentConfigName":"CodeDeployDefault.AllAtOnce",
+            
+            "ServiceRoleArn":{
+               "Fn::ImportValue":"CodeDeployServiceRoleOutput"
+            },
+            "AutoScalingGroups":[{"Ref":"WebServerGroup"}],
+            "LoadBalancerInfo" : {
+               "TargetGroupInfoList" : [ 
+                  { 
+                     "Name": { "Fn::GetAtt": ["ALBTargetGroup", "TargetGroupName"] } 
+                  } 
+               ]
+           }
+         }
+      }
+
+   }
+}
