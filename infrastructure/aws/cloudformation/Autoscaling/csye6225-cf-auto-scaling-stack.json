@@ -24,9 +24,6 @@
       "certificateARN":{
          "Type":"String"
       },
-      "noWafCertificateARN":{
-         "Type":"String"
-      },
       "DBUsername":{
          "Default":"csye6225master",
          "Description":"The database admin account username",
@@ -442,7 +439,7 @@
            "Certificates" : [
              { "CertificateArn" :
                {
-                  "Ref" : "noWafCertificateARN"
+                  "Ref" : "certificateARN"
                }
            }
            ]
