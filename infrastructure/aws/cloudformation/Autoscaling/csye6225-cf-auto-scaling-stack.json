@@ -15,6 +15,9 @@
       },"domainName":{
          "Type":"String"
       },
+      "aliasDomainName":{
+         "Type":"String"
+      },
       "hostedZoneID":{
          "Type":"String"
       },
@@ -249,7 +252,7 @@
          "Type" : "AWS::AutoScaling::AutoScalingGroup",
          "Properties" : {
             "AutoScalingGroupName" : "WebServerGroup",
-            "Cooldown" : "30",
+            "Cooldown" : "10",
             "LaunchConfigurationName" : {"Ref": "asglaunchconfig"},
             "MaxSize" : "10",
             "MinSize" : "3",
@@ -263,7 +266,7 @@
                   "PropagateAtLaunch":true
                }
             ],
-            "TargetGroupARNs" : [ {"Ref":"ALBTargetGroup"}],
+            "TargetGroupARNs" : [ {"Ref":"ALBTargetGroup"},{"Ref":"ALBTargetGroup1"}],
             "VPCZoneIdentifier" : [{"Fn::ImportValue":"csye6225-cf-websubnet1"},{"Fn::ImportValue":"csye6225-cf-dbsubnet1"}]
          }
       },
@@ -275,7 +278,7 @@
            "AutoScalingGroupName": {
              "Ref": "WebServerGroup"
            },
-           "Cooldown": "30",
+           "Cooldown": "10",
            "ScalingAdjustment": "1"
          }
        },
@@ -287,7 +290,7 @@
            "AutoScalingGroupName": {
              "Ref": "WebServerGroup"
            },
-           "Cooldown": "60",
+           "Cooldown": "10",
            "ScalingAdjustment": "-1"
          }
        },
@@ -329,7 +332,7 @@
            "Statistic": "Average",
            "Period": "60",
            "EvaluationPeriods": "2",
-           "Threshold": "5",
+               "Threshold": "5",
            "AlarmActions": [
              {
                "Ref": "WebServerScaleDownPolicy"
@@ -356,6 +359,23 @@
              "SecurityGroups" : [ {"Ref":"loadbalancerSecurityGroup"} ],
              "Subnets" :[{"Fn::ImportValue":"csye6225-cf-websubnet1"}, {"Fn::ImportValue":"csye6225-cf-dbsubnet1"}],
              "Name" : "ApplicationLoadBalancer",
+             "Scheme" : "internet-facing",
+             "Tags" : [  {
+               "Key": "Name",
+               "Value": "Loadbalancer"
+           } ],
+             "Type" : "application"
+           }
+
+       },
+       "ApplicationLoadBalancer2" : {
+         "Type" : "AWS::ElasticLoadBalancingV2::LoadBalancer",
+         "Properties" :
+           {
+             "IpAddressType" : "ipv4",
+             "SecurityGroups" : [ {"Ref":"loadbalancerSecurityGroup"} ],
+             "Subnets" :[{"Fn::ImportValue":"csye6225-cf-websubnet1"}, {"Fn::ImportValue":"csye6225-cf-dbsubnet1"}],
+             "Name" : "ApplicationLoadBalancer2",
              "Scheme" : "internet-facing",
              "Tags" : [  {
                "Key": "Name",
@@ -405,6 +425,46 @@
            "Protocol" : "HTTP"
 
          }
+       },"ALBListenerService2": {
+         "Type" : "AWS::ElasticLoadBalancingV2::Listener",
+         "Properties" : {
+           "DefaultActions" : [{
+             "Type" : "forward",
+             "TargetGroupArn" : { "Ref" : "ALBTargetGroup1" }
+           }
+         ],
+           "LoadBalancerArn" : { "Ref" : "ApplicationLoadBalancer2" },
+           "Port" : "443",
+           "Protocol" : "HTTPS",
+           "Certificates" : [
+             { "CertificateArn" :
+               {
+                  "Ref" : "certificateARN"
+               }
+           }
+           ]
+         }
+       },
+       "ALBListenerService3": {
+         "Type" : "AWS::ElasticLoadBalancingV2::Listener",
+         "Properties" : {
+           "DefaultActions" : [
+           {
+            "Type" : "redirect",
+            "RedirectConfig":{
+               "Host" : "#{host}",
+               "Path" : "/#{path}",
+               "Port" : "443",
+               "Protocol" : "HTTPS",
+               "StatusCode" : "HTTP_301"
+             }
+           }
+         ],
+           "LoadBalancerArn" : { "Ref" : "ApplicationLoadBalancer2" },
+           "Port" : "8080",
+           "Protocol" : "HTTP"
+
+         }
        },
 
    "ALBTargetGroup":{
@@ -417,6 +477,26 @@
        "HealthCheckTimeoutSeconds" : 7,
        "HealthyThresholdCount" : 3,
        "Name" : "ALBTargetGroup",
+       "Port" : 8080,
+       "Protocol" : "HTTP",
+       "TargetType":"instance",
+       "UnhealthyThresholdCount" : 5,
+       "VpcId" : { "Fn::ImportValue":"csye6225-cf-vpc"},
+       "Matcher":{
+            "HttpCode" : "401"
+         }
+     }
+   },
+   "ALBTargetGroup1":{
+     "Type" : "AWS::ElasticLoadBalancingV2::TargetGroup",
+     "Properties" : {
+       "HealthCheckIntervalSeconds" : 30,
+       "HealthCheckPath" : "/",
+       "HealthCheckPort" : "8080",
+       "HealthCheckProtocol" : "HTTP",
+       "HealthCheckTimeoutSeconds" : 7,
+       "HealthyThresholdCount" : 3,
+       "Name" : "ALBTargetGroup1",
        "Port" : 8080,
        "Protocol" : "HTTP",
        "TargetType":"instance",
@@ -440,7 +520,19 @@
 
             }
       },
+      "DNSresourcerecord2":{
+         "Type" : "AWS::Route53::RecordSet",
+         "Properties" : {
+         "AliasTarget": {
+                  "HostedZoneId" : { "Fn::GetAtt" : ["ApplicationLoadBalancer2", "CanonicalHostedZoneID"] },
+                  "DNSName" : { "Fn::GetAtt" : ["ApplicationLoadBalancer2","DNSName"] }
+            },
+         "HostedZoneId" : {"Ref":"hostedZoneID"},
+         "Name" :  {"Ref":"aliasDomainName"},
+         "Type" : "A"
 
+            }
+      },
 
       "DynamoDBTable":{
          "Type":"AWS::DynamoDB::Table",

@@ -30,8 +30,8 @@
             <stringProp name="-1478578531">_email</stringProp>
           </collectionProp>
           <collectionProp name="UserParameters.thread_values">
-            <collectionProp name="-1879487245">
-              <stringProp name="-1069827943">${__V(Test_${__Random(1,1000000,)}@gmail.com)}</stringProp>
+            <collectionProp name="939937294">
+              <stringProp name="1684443976">${__V(${__P(emailPrefix)}_${__Random(1,1000000,)}@gmail.com)}</stringProp>
             </collectionProp>
           </collectionProp>
           <boolProp name="UserParameters.per_iteration">true</boolProp>
@@ -51,7 +51,7 @@
               </elementProp>
             </collectionProp>
           </elementProp>
-          <stringProp name="HTTPSampler.domain">csye6225s19hagalavadigopalakrs.me</stringProp>
+          <stringProp name="HTTPSampler.domain">${__P(Domain)}</stringProp>
           <stringProp name="HTTPSampler.port"></stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
           <stringProp name="HTTPSampler.contentEncoding"></stringProp>
@@ -231,7 +231,7 @@ f.close();</stringProp>
               </elementProp>
             </collectionProp>
           </elementProp>
-          <stringProp name="HTTPSampler.domain">csye6225s19hagalavadigopalakrs.me</stringProp>
+          <stringProp name="HTTPSampler.domain">${__P(Domain)}</stringProp>
           <stringProp name="HTTPSampler.port"></stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
           <stringProp name="HTTPSampler.contentEncoding"></stringProp>
@@ -340,7 +340,7 @@ vars.put(&quot;base64HeaderValue&quot;,new String(encodedUsernamePassword));</st
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
             <collectionProp name="Arguments.arguments"/>
           </elementProp>
-          <stringProp name="HTTPSampler.domain">csye6225s19hagalavadigopalakrs.me</stringProp>
+          <stringProp name="HTTPSampler.domain">${__P(Domain)}</stringProp>
           <stringProp name="HTTPSampler.port"></stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
           <stringProp name="HTTPSampler.contentEncoding"></stringProp>
