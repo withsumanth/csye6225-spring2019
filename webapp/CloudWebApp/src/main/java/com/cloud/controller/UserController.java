@@ -172,7 +172,10 @@ public class UserController {
 			String emailJson = "{ \"email\":\""+user.getUserEmail()+"\"}";
 			PublishRequest pubRequest = new PublishRequest(topic, emailJson);
 			sns.publish(pubRequest);
-			sns.publish(pubRequest);
+			PublishRequest pubRequest1 = new PublishRequest(topic, emailJson);
+			//sns.publish(pubRequest);
+			//sns.publish(pubRequest);
+			sns.publish(pubRequest1);
 			logger.info("Email sent successfully - CREATED " + UserController.class);
 			m.put("status", HttpStatus.CREATED.toString());
 			return new ResponseEntity<Map<String, Object>>(m, HttpStatus.CREATED);
